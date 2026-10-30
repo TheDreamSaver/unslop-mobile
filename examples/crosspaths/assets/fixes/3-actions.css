@@ -1,0 +1,11 @@
+/* Fix 3 · Confirmation never covers the actions. Before: after saving, a floating toast sat on top
+   of Share card for four seconds, and at 320 px it covered the whole action bar. Moving the toast
+   up only moves the problem onto the content, so the save confirmation now sits in the top bar's
+   empty centre. Other short messages still use the toast, placed above the bottom bar. A lone
+   action fills the bar. */
+
+.save-status { flex: 1; min-width: 0; display: flex; align-items: center; justify-content: center; gap: 6px; margin: 0 8px; font-size: 13px; font-weight: 600; line-height: 1.3; text-align: center; text-wrap: balance; color: var(--encounter-ink); }
+.save-status .icon { width: 16px; height: 16px; stroke-width: 2.4; }
+.toast { bottom: calc(var(--bar, 92px) + var(--inset-bottom) + 12px); }
+.app[data-screen=people] .toast { --bar: 108px; }
+#whatsapp[hidden] + #share-person { flex-grow: 1; }

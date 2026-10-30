@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>CrossPaths example</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="assets/app.css">
+  <link rel="stylesheet" href="assets/fixes/1-empty-values.css" data-fix>
+  <link rel="stylesheet" href="assets/fixes/2-memory.css" data-fix>
+  <link rel="stylesheet" href="assets/fixes/3-actions.css" data-fix>
+  <link rel="stylesheet" href="assets/fixes/4-safe-areas.css" data-fix>
+  <script>
+    // ?variant=before shows the design study as it was; anything else shows the improved version.
+    document.documentElement.dataset.variant = new URLSearchParams(location.search).get("variant") === "before" ? "before" : "after";
+    if (document.documentElement.dataset.variant === "before") for (const link of document.querySelectorAll("link[data-fix]")) link.disabled = true;
+  </script>
+</head>
+<body>
+<svg style="display:none" aria-hidden="true">
+  <symbol id="search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></symbol>
+  <symbol id="plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="people" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20v-2a6 6 0 0 1 12 0v2M16 5a3 3 0 0 1 0 6m2 3a5 5 0 0 1 3 5"/></symbol>
+  <symbol id="map" viewBox="0 0 24 24"><path d="m3 5 6-2 6 2 6-2v16l-6 2-6-2-6 2ZM9 3v16m6-14v16"/></symbol>
+  <symbol id="user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+  <symbol id="pin" viewBox="0 0 24 24"><path d="M19 10c0 5-7 11-7 11S5 15 5 10a7 7 0 0 1 14 0Z"/><circle cx="12" cy="10" r="2"/></symbol>
+  <symbol id="home" viewBox="0 0 24 24"><path d="m3 10 9-7 9 7M5 9v12h14V9m-10 12v-7h6v7"/></symbol>
+  <symbol id="arrow" viewBox="0 0 24 24"><path d="m14 6-6 6 6 6"/></symbol>
+  <symbol id="qr" viewBox="0 0 24 24"><path d="M3 3h6v6H3Zm12 0h6v6h-6ZM3 15h6v6H3Zm12 0h2v2h-2Zm6 0v6h-6v-2m-3-7h3m-3-9v5M3 12h5"/></symbol>
+  <symbol id="calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4m10-4v4M3 11h18m-13 4h2m4 0h2"/></symbol>
+  <symbol id="lock" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3m-4 4v3"/></symbol>
+  <symbol id="chat" viewBox="0 0 24 24"><path d="M21 11.5a9 9 0 0 1-13 8L3 21l1.5-5A9 9 0 1 1 21 11.5Z"/><path d="M8 8c1 4 3 6 7 7l1-2-3-1-1 1-1-1 1-1-2-3Z"/></symbol>
+  <symbol id="check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
+  <symbol id="edit" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16Zm9-13 4 4"/></symbol>
+</svg>
+<div class="app" id="app" data-screen="people">
+
+  <section class="screen" id="people-screen" aria-label="People">
+    <div class="inset-top"></div>
+    <div class="scroll" id="people-scroll">
+      <header class="masthead"><span class="brand" aria-label="CrossPaths">Cross<span class="brand-paths">Paths</span></span><button class="icon-button" type="button" aria-label="Scan a contact QR" data-unavailable="QR scanning"><svg class="icon" aria-hidden="true"><use href="#qr"/></svg></button></header>
+      <div class="people-intro">
+        <h1 class="visually-hidden">Your people</h1>
+        <p class="subhead" id="people-count"></p>
+        <label class="search"><svg class="icon" aria-hidden="true"><use href="#search"/></svg><input id="search-input" type="search" aria-label="Search people by name, place, or memory" placeholder="A person, a place, a memory…"></label>
+      </div>
+      <div class="segmented" role="tablist" aria-label="Browse people"><button type="button" role="tab" id="tab-people" aria-selected="true" aria-controls="people-list">People</button><button type="button" role="tab" id="tab-places" aria-selected="false" aria-controls="people-list" tabindex="-1">Places</button></div>
+      <div id="people-list" role="tabpanel" aria-labelledby="tab-people"></div>
+    </div>
+    <nav class="bottom-nav" aria-label="Primary navigation">
+      <button type="button" aria-current="page"><svg class="icon" aria-hidden="true"><use href="#people"/></svg>People</button>
+      <button type="button" data-unavailable="Map"><svg class="icon" aria-hidden="true"><use href="#map"/></svg>Map</button>
+      <button type="button" class="add-fab" id="add-person" aria-label="Add a person"><svg class="icon" aria-hidden="true"><use href="#plus"/></svg></button>
+      <button type="button" data-unavailable="Journey"><svg class="icon" aria-hidden="true"><use href="#calendar"/></svg>Journey</button>
+      <button type="button" data-unavailable="You"><svg class="icon" aria-hidden="true"><use href="#user"/></svg>You</button>
+    </nav>
+  </section>
+
+  <section class="screen" id="detail-screen" aria-label="Person" hidden>
+    <div class="inset-top"></div>
+    <div class="scroll" id="detail-scroll">
+      <div class="topline"><button class="icon-button" type="button" id="detail-back" aria-label="Back to People"><svg class="icon" aria-hidden="true"><use href="#arrow"/></svg></button><span class="save-status" id="save-status" role="status"></span><button class="text-button" type="button" id="edit-person">Edit</button></div>
+      <div class="detail-hero"><div class="avatar detail-avatar" id="detail-avatar" aria-hidden="true"></div><h1 class="detail-name" id="detail-name"></h1><p class="detail-handle" id="detail-handle"></p></div>
+      <div class="memory" id="detail-memory"><svg class="icon" aria-hidden="true"><use href="#pin"/></svg><p class="eyebrow">Where your paths crossed</p><p class="memory-place" id="detail-met"></p><small id="detail-date"></small></div>
+      <h2 class="section-title">Places in their life</h2>
+      <div class="location" id="loc-home"><svg class="icon location-icon" aria-hidden="true"><use href="#home"/></svg><div><small>Homebase</small><p id="detail-home"></p></div></div>
+      <div class="location" id="loc-last"><svg class="icon location-icon" aria-hidden="true"><use href="#pin"/></svg><div><small>Last known location</small><p id="detail-last"></p><small id="detail-freshness"></small></div></div>
+      <div class="note"><h2 class="section-title">A little context</h2><p class="note-text" id="detail-note"></p><button type="button" class="add-memory" id="add-memory" hidden><svg class="icon" aria-hidden="true"><use href="#edit"/></svg>Add a memory</button><p class="note-private" id="note-private"><svg class="icon" aria-hidden="true"><use href="#lock"/></svg>Only visible to you</p></div>
+    </div>
+    <div class="detail-actions"><button class="primary" type="button" id="whatsapp"><svg class="icon" aria-hidden="true"><use href="#chat"/></svg>WhatsApp</button><button class="secondary" type="button" id="share-person">Share card</button></div>
+  </section>
+
+  <form class="screen" id="capture-screen" aria-label="New person" hidden novalidate>
+    <div class="inset-top"></div>
+    <div class="scroll" id="capture-scroll">
+      <div class="topline"><button class="icon-button" type="button" id="capture-back" aria-label="Back to People"><svg class="icon" aria-hidden="true"><use href="#arrow"/></svg></button><h2 id="capture-heading">New person</h2><button class="icon-button" type="button" aria-label="Scan instead" data-unavailable="QR scanning"><svg class="icon" aria-hidden="true"><use href="#qr"/></svg></button></div>
+      <h1 class="capture-title">Who crossed<br>your path?</h1>
+      <p class="capture-intro">Start with a name. Add the rest whenever you like.</p>
+      <label class="field"><span class="field-title">Name</span><input id="new-name" name="name" autocomplete="off" placeholder="Their name" required maxlength="120"></label>
+      <label class="field"><span class="field-title">Where did you meet? <small>Optional</small></span><input id="new-place" name="place" placeholder="City, country" maxlength="160"><span class="field-hint"><svg class="icon" aria-hidden="true"><use href="#pin"/></svg>A city is enough.</span></label>
+      <label class="field"><span class="field-title">Something to remember <small>Optional</small></span><textarea id="new-note" name="note" placeholder="The volcano hike. That little coffee place." maxlength="500"></textarea></label>
+      <button class="more" type="button" id="more-button" aria-expanded="false" aria-controls="more-fields">Instagram, phone &amp; other locations <span aria-hidden="true">+</span></button>
+      <div id="more-fields" hidden>
+        <label class="field"><span class="field-title">Instagram</span><input id="new-instagram" name="instagram" placeholder="@handle" maxlength="100"></label>
+        <label class="field"><span class="field-title">Phone</span><input id="new-phone" name="phone" type="tel" placeholder="Include country code" maxlength="40"></label>
+        <label class="field"><span class="field-title">Homebase</span><input id="new-home" name="home" placeholder="City, country" maxlength="160"></label>
+        <label class="field"><span class="field-title">Last known location</span><input id="new-last" name="last" placeholder="City, country" maxlength="160"></label>
+      </div>
+    </div>
+    <div class="capture-footer"><button class="primary" type="submit" id="save-person">Save person</button><p>You can fill in the details later.</p></div>
+  </form>
+
+  <div class="toast" id="toast" role="status" hidden></div>
+</div>
+<script src="assets/fixture.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>

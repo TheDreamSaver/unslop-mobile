@@ -1,0 +1,41 @@
+{
+  "title": "CrossPaths · a person saved with only a name",
+  "label": "HTML design study · fictional data · 390×844",
+  "source": "app.html?variant=before&screen=saved&hold",
+  "prepare": "story/prepare.js",
+  "viewport": "390x844",
+  "safeArea": { "top": 47, "bottom": 34 },
+  "intro": "Before · saved with only a name",
+  "outro": "After · same record, same fixture",
+  "duration": 12,
+  "fps": 30,
+  "steps": [
+    {
+      "name": "Empty values",
+      "caption": "Missing places read as missing",
+      "css": "assets/fixes/1-empty-values.css",
+      "highlight": [
+        { "selector": "#detail-met", "label": "Reads like a place" },
+        { "selector": "#detail-freshness", "label": "Date of what?" }
+      ]
+    },
+    {
+      "name": "Memory",
+      "caption": "No invented memory",
+      "css": "assets/fixes/2-memory.css",
+      "highlight": [{ "selector": "#detail-note", "label": "Not their words" }]
+    },
+    {
+      "name": "Confirmation",
+      "caption": "The save note clears the actions",
+      "css": "assets/fixes/3-actions.css",
+      "highlight": [{ "selector": "#toast", "label": "Covers Share card" }]
+    },
+    {
+      "name": "Safe areas",
+      "caption": "Buttons clear the home indicator",
+      "css": "assets/fixes/4-safe-areas.css",
+      "kind": "insets"
+    }
+  ]
+}

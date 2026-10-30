@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Capture test page</title>
+<style>
+  body { margin: 0; font: 15px/1.4 system-ui, sans-serif; }
+  #layout { padding: 16px; }
+  .wide { display: none; }
+  @media (min-width: 700px) { .wide { display: block; } .narrow { display: none; } }
+  .tiny { width: 30px; height: 30px; font-size: 10px; }
+  .bar { position: fixed; left: 0; right: 0; bottom: 0; height: 56px; display: flex; gap: 8px; padding: 4px; background: #eee; }
+  .bar button { flex: 1; min-height: 48px; }
+  .toast { position: fixed; left: 50%; bottom: 8px; transform: translateX(-50%); width: 60%; height: 40px; background: #222; color: #fff; }
+</style>
+</head>
+<body>
+<main id="layout"><p class="narrow" id="mode">Phone layout</p><p class="wide">Desktop layout</p><button class="tiny" type="button" aria-label="Tiny">x</button></main>
+<nav class="bar"><button type="button">Left</button><button type="button" id="covered">Covered</button></nav>
+<div class="toast" role="status">Saved</div>
+</body>
+</html>

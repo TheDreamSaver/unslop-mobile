@@ -1,0 +1,25 @@
+{
+  "title": "CrossPaths · add a person with only a name",
+  "label": "Browser captures · HTML design study · fictional data · 390×844 @3x",
+  "before": { "manifest": "captures/manifest.json", "variant": "before" },
+  "after": { "manifest": "captures/manifest.json", "variant": "after" },
+  "device": "phone-390",
+  "textScale": 1,
+  "outro": "Same fixture, same state, same viewport",
+  "pairs": [
+    {
+      "state": "saved-name-only",
+      "caption": "The saved person shows only what was saved",
+      "highlights": [
+        { "rect": [18, 241, 354, 116], "label": "Empty, not a place" },
+        { "rect": [18, 549, 354, 141], "label": "No invented memory" },
+        { "rect": [0, 736, 390, 108], "label": "Actions uncovered" }
+      ]
+    },
+    {
+      "state": "draft-reopened",
+      "caption": "A typed name survives leaving the form",
+      "highlights": [{ "rect": [18, 312, 354, 53], "label": "Draft kept" }]
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+/* Fix 2 · An empty memory is an empty state with an action, never placeholder copy set as a note.
+   Before: "Add a detail you would like to remember." sat where the saved note goes, in note type,
+   above "Only visible to you", so it read as something the user wrote. */
+
+.note-text.is-empty { color: var(--muted); }
+.add-memory { display: inline-flex; align-items: center; gap: 8px; min-height: 48px; margin-top: 14px; padding: 11px 16px; border: 1px solid var(--control-line); border-radius: var(--control-radius); background: var(--surface); color: var(--accent); font-size: 14px; font-weight: 600; }
+.add-memory .icon { width: 18px; height: 18px; }

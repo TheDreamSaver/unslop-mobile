@@ -1,0 +1,7 @@
+/* Fix 4 · Bars reserve the device's safe areas. Before: a fixed 44px top strip and no space for the
+   home indicator, so on a 390x844 phone with a 34pt indicator the navigation labels and the bottom
+   buttons sat inside it. env() is 0 on devices without insets, so nothing changes there. */
+
+:root { --inset-top: env(safe-area-inset-top, 0px); --inset-bottom: env(safe-area-inset-bottom, 0px); }
+.bottom-nav { padding-bottom: max(10px, var(--inset-bottom)); }
+.capture-footer, .detail-actions { padding-bottom: max(20px, calc(var(--inset-bottom) + 8px)); }

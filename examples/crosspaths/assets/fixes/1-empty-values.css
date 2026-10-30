@@ -1,0 +1,9 @@
+/* Fix 1 · Values that were never saved read as missing, not as saved places.
+   Before: an empty meeting place was set in the 23px display serif like a real place, and empty
+   homebase and last known values used the primary ink. The record keeps saying what is missing;
+   only its weight changes, so the saved information is what stands out. */
+
+.memory-place.is-empty { font: 500 17px/1.4 "Hanken Grotesk", system-ui, sans-serif; letter-spacing: 0; }
+.location p.is-empty { color: var(--muted); }
+.person-met.is-empty { font-weight: 500; }
+.person-note.is-empty { color: var(--muted); }

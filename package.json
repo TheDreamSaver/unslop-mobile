@@ -1,0 +1,19 @@
+{
+  "name": "unslop-mobile",
+  "version": "0.1.0",
+  "description": "An agent skill for reviewing and improving mobile interfaces from rendered evidence, with optional capture and before/after video tools. Adapted from unslop by Damir Sokolovsky.",
+  "license": "CC-BY-4.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=18.17" },
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "example:capture": "node scripts/capture.mjs examples/crosspaths/capture.json",
+    "example:compare": "node scripts/compare.mjs examples/crosspaths/compare.json examples/crosspaths/media/crosspaths-compare.mp4",
+    "example:story": "node scripts/story.mjs examples/crosspaths/story.json examples/crosspaths/media/crosspaths-story.mp4",
+    "example": "npm run example:capture && npm run example:compare && npm run example:story"
+  },
+  "devDependencies": {
+    "playwright": "1.64.1"
+  }
+}
