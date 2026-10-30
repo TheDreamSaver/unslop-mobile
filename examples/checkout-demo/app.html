@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Marlow Market · demo checkout</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="assets/app.css">
+  <link rel="stylesheet" href="assets/fixes/1-safe-areas.css" data-fix>
+  <link rel="stylesheet" href="assets/fixes/2-touch.css" data-fix>
+  <link rel="stylesheet" href="assets/fixes/3-text.css" data-fix>
+  <link rel="stylesheet" href="assets/fixes/4-covered.css" data-fix>
+  <link rel="stylesheet" href="assets/fixes/5-color.css" data-fix>
+  <script>
+    // ?variant=before is the vibecoded draft; anything else is the reviewed screen.
+    document.documentElement.dataset.variant = new URLSearchParams(location.search).get("variant") === "before" ? "before" : "after";
+    if (document.documentElement.dataset.variant === "before") for (const link of document.querySelectorAll("link[data-fix]")) link.disabled = true;
+  </script>
+</head>
+<body>
+<svg style="display:none" aria-hidden="true">
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15Z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M20 12a7.5 7.5 0 0 1-11 6.6L4 20l1.4-4.6A7.5 7.5 0 1 1 20 12Z"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M10 7V5h4v2M6.5 7l1 13h9l1-13M10 11v5M14 11v5"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
+  <symbol id="p-avocado" viewBox="0 0 48 48"><path d="M24 4c7 0 12 9 13 18 1 10-5 21-13 21S10 32 11 22C12 13 17 4 24 4Z" fill="#3D6B2C"/><path d="M24 8.5c5 0 9 7.5 9.8 14.5.9 8-3.9 16.5-9.8 16.5S13.3 31 14.2 23C15 16 19 8.5 24 8.5Z" fill="#CFE08A"/><circle cx="24" cy="28" r="6.8" fill="#8A5A34"/><circle cx="21.8" cy="25.8" r="2" fill="#B07C52"/></symbol>
+  <symbol id="p-bread" viewBox="0 0 48 48"><path d="M6 30c0-10 8-18 18-18s18 8 18 18v4a4 4 0 0 1-4 4H10a4 4 0 0 1-4-4Z" fill="#C98A4B"/><path d="M6 32h36v2a4 4 0 0 1-4 4H10a4 4 0 0 1-4-4Z" fill="#9E6431"/><path d="m15 22 5 5m2-9 5 5m2-3 5 5" stroke="#F1D3A3" stroke-width="2.4" stroke-linecap="round"/></symbol>
+  <symbol id="p-lemons" viewBox="0 0 48 48"><ellipse cx="18.5" cy="29" rx="12" ry="9.5" transform="rotate(-18 18.5 29)" fill="#EBC236"/><ellipse cx="30.5" cy="24" rx="11" ry="8.8" transform="rotate(24 30.5 24)" fill="#F7DA55"/><path d="M32 13.5c3-4.2 8-5.2 10.2-4.2-1 4.2-5.2 7-10.2 6Z" fill="#5E8C3A"/></symbol>
+</svg>
+<div class="backdrop" aria-hidden="true"></div>
+
+<main class="screen" id="screen">
+  <header class="top">
+    <div class="heading">
+      <h1 class="title"><span data-copy="title"></span></h1>
+      <p class="subtitle" data-copy="subtitle"></p>
+    </div>
+    <div class="actions">
+      <button type="button" class="icon-btn chat" aria-label="Chat with the shop"><svg class="line" aria-hidden="true"><use href="#i-chat"/></svg></button>
+      <button type="button" class="icon-btn bell" aria-label="Notifications"><span class="emoji" aria-hidden="true">🔔</span><svg class="line" aria-hidden="true"><use href="#i-bell"/></svg></button>
+    </div>
+  </header>
+
+  <p class="promo"><i class="promo-glow" aria-hidden="true"></i><span class="promo-text" data-copy="promo"></span></p>
+
+  <h2 class="section"><span data-copy="items-heading"></span></h2>
+  <ul class="items" id="items"></ul>
+
+  <h2 class="section"><span data-copy="slots-heading"></span></h2>
+  <div class="slots" role="radiogroup" aria-label="Delivery time" id="slots"></div>
+
+  <dl class="summary">
+    <div><dt>Subtotal</dt><dd data-copy="subtotal"></dd></div>
+    <div><dt>Delivery</dt><dd data-copy="delivery"></dd></div>
+  </dl>
+</main>
+
+<button type="button" class="fab" aria-label="Chat with the shop">💬</button>
+<footer class="checkout">
+  <p class="total"><span>Total</span><span class="total-value" data-copy="total"></span></p>
+  <button type="button" class="pay" id="pay"><span data-copy="pay"></span></button>
+</footer>
+
+<script src="assets/app.js"></script>
+</body>
+</html>

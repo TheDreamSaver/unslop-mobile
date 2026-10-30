@@ -1,0 +1,78 @@
+/* Marlow Market checkout, as a vibecoded first draft ("before"). Every choice here is typical of a
+   screen generated without looking at a phone, and each one is a real problem on one:
+   content under the Dynamic Island and home indicator, 24 px buttons, 10 px uppercase labels,
+   truncated product names, a remove action that only exists on hover, selection shown by colour
+   alone, a floating chat button over the total, and white text on a light gradient at 2.6:1.
+   The fixes in fixes/ are applied on top, one per story step. */
+
+@font-face { font-family: "Hanken Grotesk"; src: url("fonts/HankenGrotesk-Variable.ttf"); font-weight: 100 900; font-display: block; }
+
+:root { --inset-top: 0px; }
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; overflow: hidden; background-color: #150A36; color: #ECE7FF; font: 13px/1.35 -apple-system, BlinkMacSystemFont, system-ui, sans-serif; -webkit-text-size-adjust: 100%; -webkit-font-smoothing: antialiased; }
+button { font: inherit; color: inherit; border: 0; padding: 0; margin: 0; background: none; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+svg.line { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+/* Gradients live on their own layers so they can fade out while the solid colour beneath changes. */
+.backdrop { position: fixed; inset: 0; opacity: 1; background: radial-gradient(110% 55% at 90% 0%, #DB2777 0%, transparent 60%), radial-gradient(90% 55% at 0% 35%, #7C3AED 0%, transparent 62%), linear-gradient(180deg, #3B1A8A 0%, #1A0D4A 55%, #0D0726 100%); }
+
+.screen { position: absolute; inset: 0; overflow-y: auto; padding: var(--inset-top) 12px 0; scrollbar-width: none; }
+.screen::-webkit-scrollbar { display: none; }
+
+.top { display: flex; align-items: center; gap: 8px; padding: 6px 0 0; }
+.heading { flex: 1; min-width: 0; }
+.title { margin: 0; font-size: 26px; font-weight: 800; line-height: 1.15; letter-spacing: -0.02em; }
+/* Gradient text sits on the title itself, or on the outgoing words only when a story swaps them,
+   because a text clip on the swap would also catch the incoming words. */
+.title [data-copy]:not(:has(.swap)), .title .from { background: linear-gradient(90deg, #F0ABFC, #818CF8); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.subtitle { margin: 2px 0 0; font-size: 11px; color: #A99CF0; }
+.actions { display: flex; align-items: center; gap: 6px; }
+.icon-btn { position: relative; width: 22px; height: 22px; display: grid; place-items: center; border-radius: 11px; background-color: rgba(255, 255, 255, 0); }
+.icon-btn .emoji { font-size: 15px; line-height: 1; opacity: 1; }
+.icon-btn svg { position: absolute; width: 22px; height: 22px; opacity: 0; }
+.chat { display: none; }
+
+.promo { position: relative; margin: 12px 0 14px; padding: 10px 12px; border-radius: 18px; background-color: #D77BE6; box-shadow: 0 0 22px rgba(236, 72, 153, 0.55); overflow: hidden; }
+.promo-glow { position: absolute; inset: 0; opacity: 1; background: linear-gradient(90deg, #E879C9, #B794F4); }
+.promo-text { position: relative; display: block; font-size: 10px; font-weight: 700; letter-spacing: 0.1em; color: #FFFFFF; text-align: center; }
+
+.section { margin: 0 0 8px; font-size: 11px; font-weight: 700; letter-spacing: 0.14em; color: #A99CF0; }
+
+.items { list-style: none; margin: 0 0 16px; padding: 0; }
+.item { position: relative; display: grid; grid-template-columns: 52px minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 10px; margin-bottom: 8px; border-radius: 16px; border: 1px solid rgba(167, 139, 250, 0.45); background-color: rgba(255, 255, 255, 0.07); box-shadow: 0 10px 26px rgba(124, 58, 237, 0.35); }
+.thumb { width: 52px; height: 52px; display: grid; place-items: center; border-radius: 14px; background-color: #6D28D9; box-shadow: 0 0 16px rgba(168, 85, 247, 0.6); }
+.thumb svg { width: 42px; height: 42px; }
+.info { min-width: 0; }
+.name { margin: 0; font-size: 13px; font-weight: 700; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.meta { margin: 2px 0 0; font-size: 10px; letter-spacing: 0.06em; color: #9D8FE6; }
+.remove { display: none; position: absolute; top: 6px; right: 8px; font-size: 11px; color: #F0ABFC; }
+@media (hover: hover) { .item:hover .remove { display: block; } }
+
+.qty { display: flex; align-items: center; gap: 2px; }
+.qty button { position: relative; width: 24px; height: 24px; display: grid; place-items: center; border-radius: 12px; background-color: rgba(167, 139, 250, 0.25); font-size: 14px; font-weight: 700; line-height: 1; }
+.qty .glyph { opacity: 1; }
+.qty .trash { position: absolute; width: 18px; height: 18px; opacity: 0; }
+.qty output { min-width: 16px; text-align: center; font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+.slots { display: flex; gap: 6px; margin: 0 0 16px; }
+.slot { display: inline-flex; align-items: center; height: 26px; padding: 0 10px; border-radius: 13px; background-color: rgba(255, 255, 255, 0.08); font-size: 10px; font-weight: 700; letter-spacing: 0.06em; color: #CFC6FF; white-space: nowrap; }
+.slot[aria-checked="true"] { background-color: #8B5CF6; color: #FFFFFF; box-shadow: 0 0 16px rgba(139, 92, 246, 0.7); }
+.slot .check { width: 18px; height: 18px; max-width: 0; margin-right: 0; opacity: 0; }
+
+.summary { margin: 0 0 16px; padding: 10px 12px; border-radius: 16px; border: 1px solid rgba(167, 139, 250, 0.3); background-color: rgba(255, 255, 255, 0.06); }
+.summary div { display: flex; justify-content: space-between; padding: 2px 0; font-size: 11px; color: #B8ADF5; }
+.summary dt, .summary dd { margin: 0; }
+.summary dd { font-variant-numeric: tabular-nums; }
+
+
+.fab { position: fixed; right: 18px; bottom: 52px; z-index: 5; width: 58px; height: 58px; display: grid; place-items: center; border-radius: 29px; background-color: #A855F7; box-shadow: 0 0 28px rgba(217, 70, 239, 0.85); font-size: 26px; animation: pulse 1.6s ease-in-out infinite; }
+@keyframes pulse { 50% { box-shadow: 0 0 40px rgba(217, 70, 239, 1); } }
+
+.checkout { position: fixed; left: 0; right: 0; bottom: 0; z-index: 4; padding: 8px 12px 8px; background-color: rgba(21, 10, 54, 0.9); }
+.total { display: flex; justify-content: space-between; margin: 0 4px 6px; font-size: 13px; font-weight: 800; color: #FFFFFF; }
+.total-value { font-variant-numeric: tabular-nums; }
+.pay { position: relative; width: 100%; height: 40px; overflow: hidden; border-radius: 20px; background-color: #C026D3; box-shadow: 0 0 24px rgba(236, 72, 153, 0.7); color: #FFFFFF; font-size: 13px; font-weight: 800; letter-spacing: 0.08em; }
+.pay::before { content: ""; position: absolute; inset: 0; opacity: 1; background: linear-gradient(90deg, #EC4899, #8B5CF6); }
+.pay span { position: relative; }

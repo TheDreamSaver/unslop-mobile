@@ -23,10 +23,37 @@ test("the example story lays out at a phone viewport in every canvas, without st
 });
 
 test("frames are explicit crops, and the viewport can be overridden for desktop stories", () => {
-  const cropped = loadStory(story, { canvas: "square", frame: "0,0,390,390" });
+  const cropped = loadStory(story, { canvas: "square", layout: "stack", frame: "0,0,390,390" });
   assert.deepEqual(cropped.frame, { x: 0, y: 0, width: 390, height: 390 });
   assert.ok(storyLayout(cropped).readability.warnings.length === 0, "cropping close fixes the warning");
   assert.deepEqual(loadStory(story, { viewport: "1440x900" }).viewport, { width: 1440, height: 900 });
+});
+
+test("square and landscape default to a side layout that gives the phone the full height", () => {
+  for (const canvas of ["square", "landscape"]) {
+    const loaded = loadStory(story, { canvas });
+    assert.equal(loaded.layout, "side");
+    const layout = storyLayout(loaded);
+    const stacked = storyLayout(loadStory(story, { canvas, layout: "stack" }));
+    assert.ok(layout.scale > stacked.scale, `${canvas}: the side layout shows the phone larger`);
+    assert.ok(layout.panel.x + layout.panel.width <= layout.screen.x, `${canvas}: the caption column stays clear of the screen`);
+    assert.ok(Math.abs(layout.screen.width / layout.screen.height - 390 / 844) < 1e-9, `${canvas}: aspect ratio kept`);
+  }
+  assert.equal(loadStory(story).layout, "stack", "portrait keeps the caption band");
+  assert.throws(() => loadStory(story, { layout: "diagonal" }), /stack or side/);
+});
+
+test("zoom regions are parsed per step and must lie inside the viewport", () => {
+  const dir = tempDir();
+  writeFileSync(join(dir, "page.html"), "<meta name=viewport content='width=device-width'><p>hi</p>");
+  writeFileSync(join(dir, "story.json"), JSON.stringify({ source: "page.html", steps: [{ name: "A", zoom: [0, 100, 390, 300], kind: "sizes", measure: ["p"] }, { name: "B", zoom: "full" }] }));
+  const loaded = loadStory(join(dir, "story.json"));
+  assert.deepEqual(loaded.steps[0].zoom, { x: 0, y: 100, width: 390, height: 300 });
+  assert.equal(loaded.steps[1].zoom, null);
+  writeFileSync(join(dir, "bad.json"), JSON.stringify({ source: "page.html", steps: [{ name: "A", zoom: [0, 700, 390, 300] }] }));
+  assert.throws(() => loadStory(join(dir, "bad.json")), /outside/);
+  writeFileSync(join(dir, "kind.json"), JSON.stringify({ source: "page.html", steps: [{ name: "A", kind: "sparkles" }] }));
+  assert.throws(() => loadStory(join(dir, "kind.json")), /use one of/);
 });
 
 test("story frames are canvas-sized whatever the viewport, and the page really lays out at the phone width", { skip: await browserSkip() }, async () => {

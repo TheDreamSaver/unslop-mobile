@@ -1,0 +1,14 @@
+/* Fix 2 · Targets a thumb can hit. Quantity buttons, delivery slots, header buttons and checkout
+   reach 44 pt, with room between neighbours. Removing an item no longer needs hover: at quantity 1
+   the minus button becomes a remove button. */
+
+.icon-btn { width: 44px; height: 44px; border-radius: 22px; }
+.actions { gap: 8px; }
+.qty { gap: 4px; }
+.qty button { width: 44px; height: 44px; border-radius: 22px; }
+.qty output { min-width: 26px; }
+.item[data-qty="1"] .dec .glyph { opacity: 0; }
+.item[data-qty="1"] .dec .trash { opacity: 1; }
+.slots { gap: 8px; }
+.slot { height: 44px; padding: 0 14px; border-radius: 22px; }
+.pay { height: 52px; border-radius: 16px; }

@@ -5,7 +5,7 @@
 import { execFileSync } from "node:child_process";
 import { mkdirSync, readdirSync, rmSync } from "node:fs";
 import { join, resolve } from "node:path";
-import { round } from "./geometry.mjs";
+import { containFit, round } from "./geometry.mjs";
 
 export const CREDIT = "unslop-mobile · adapted from unslop by @heydamir";
 
@@ -23,11 +23,34 @@ export function bands(canvas) {
   };
 }
 
+// Square and landscape canvases are short, so a caption band above the phone leaves it tiny. The
+// side layout gives the phone the full height and sets the caption in a column beside it.
+export function sideLayout({ canvas, region }) {
+  const b = bands(canvas);
+  const height = canvas.height - b.bottom - b.padding * 2;
+  const maxWidth = canvas.width * 0.52 - b.padding * 1.5;
+  const fit = containFit(region, { x: canvas.width - b.padding - maxWidth, y: b.padding, width: maxWidth, height });
+  // On a wide canvas the caption column is capped and the pair is centred, so neither the words nor
+  // the phone end up stranded at an edge. Captions grow with the column.
+  const gap = b.padding * 2.5;
+  const width = Math.min(canvas.width - b.padding * 2 - gap - fit.width, 900 * b.unit);
+  const left = (canvas.width - (width + gap + fit.width)) / 2;
+  const panel = { x: left, y: b.padding, width, height, type: Math.min(1.4, Math.max(1, width / (540 * b.unit))) };
+  const screen = { x: left + width + gap, y: fit.y, width: fit.width, height: fit.height };
+  return { scale: fit.scale, screens: [screen], panel };
+}
+
 const escape = (value) => String(value ?? "").replace(/[&<>"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[char]);
 
-export function stageHtml({ canvas, theme = DEFAULT_THEME, title = "", caption = "", label = "", screens, screenHtml, extraCss = "", script = "" }) {
+export function stageHtml({ canvas, theme = DEFAULT_THEME, title = "", caption = "", label = "", screens, screenHtml, panel = null, extraCss = "", script = "" }) {
   const b = bands(canvas);
   const u = (px) => `${round(px * b.unit, 2)}px`;
+  const side = panel ? `
+  .header { top: ${round(panel.y)}px; left: ${round(panel.x)}px; right: auto; width: ${round(panel.width)}px; height: ${round(panel.height)}px; justify-content: center; padding: 0; }
+  .title { font-size: ${u(32 * panel.type)}; margin-bottom: ${u(22)}; }
+  .caption { min-height: ${u(240 * panel.type)}; }
+  .caption > span { top: 0; bottom: auto; font-size: ${u(66 * panel.type)}; line-height: 1.08; }
+  .counter { margin-top: ${u(30)}; }` : "";
   return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><style>
   html, body { margin: 0; width: ${canvas.width}px; height: ${canvas.height}px; overflow: hidden; background: ${theme.background}; color: ${theme.text};
     font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; -webkit-font-smoothing: antialiased; }
@@ -47,7 +70,7 @@ export function stageHtml({ canvas, theme = DEFAULT_THEME, title = "", caption =
   .label { font-weight: 500; font-size: ${u(23)}; line-height: 1.3; color: ${theme.muted}; text-wrap: balance; }
   .credit { font-weight: 500; font-size: ${u(23)}; color: ${theme.muted}; white-space: nowrap; }
   #story-layer { position: absolute; inset: 0; pointer-events: none; z-index: 10; }
-  #story-layer > * { position: absolute; }
+  #story-layer > * { position: absolute; }${side}
   ${extraCss}
 </style></head><body>
   <div class="band header"><div class="title">${escape(title)}</div><div class="caption" id="caption"><span>${escape(caption)}</span></div><div class="counter" id="counter"></div></div>

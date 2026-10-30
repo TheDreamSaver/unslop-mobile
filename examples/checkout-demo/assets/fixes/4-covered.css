@@ -1,0 +1,7 @@
+/* Fix 4 · Nothing covers the total. The floating chat button sat over the order total in the
+   checkout bar and pulsed for attention; chat moves into the header, and the list leaves room for
+   the checkout bar so its last row can scroll clear. */
+
+.screen { padding-bottom: calc(150px + env(safe-area-inset-bottom, 0px)); }
+.fab { display: none; }
+.chat { display: grid; }

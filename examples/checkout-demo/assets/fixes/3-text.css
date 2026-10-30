@@ -1,0 +1,16 @@
+/* Fix 3 · Text you can read. Body and labels at 13–16 px instead of 10–11, sentence case, product
+   names that wrap instead of being cut off, and one typeface chosen for the shop. */
+
+body { font-family: "Hanken Grotesk", system-ui, sans-serif; }
+.title { font-size: 28px; font-weight: 700; letter-spacing: -0.015em; }
+.subtitle { margin-top: 4px; font-size: 14px; }
+.promo-text { font-size: 14px; font-weight: 600; letter-spacing: 0; }
+.section { margin-bottom: 10px; font-size: 17px; font-weight: 650; letter-spacing: 0; }
+.name { font-size: 16px; font-weight: 600; line-height: 1.25; white-space: normal; }
+.meta { margin-top: 3px; font-size: 13px; letter-spacing: 0; }
+.qty button { font-size: 20px; font-weight: 500; }
+.qty output { font-size: 16px; font-weight: 600; }
+.slot { font-size: 14px; font-weight: 600; letter-spacing: 0; }
+.summary div { padding: 3px 0; font-size: 15px; }
+.total { margin: 0 2px 10px; font-size: 18px; font-weight: 700; }
+.pay { font-size: 16px; font-weight: 650; letter-spacing: 0; }

@@ -21,16 +21,18 @@ import { dirname, extname, join, normalize, relative, resolve, sep } from "node:
 import { parseArgs, number } from "./lib/args.mjs";
 import { UsageError, isMain, runCli } from "./lib/errors.mjs";
 import { findFfmpeg, launchBrowser } from "./lib/deps.mjs";
-import { parseSize, readability, resolveCanvas, resolveFrame, round, stageLayout } from "./lib/geometry.mjs";
+import { parseRect, parseSize, readability, resolveCanvas, resolveFrame, round, stageLayout } from "./lib/geometry.mjs";
 import { readJson, sha256, toolVersion } from "./lib/files.mjs";
 import { applySafeArea, normalizeDevice } from "./lib/mobile.mjs";
-import { CREDIT, DEFAULT_THEME, TICK_SOURCE, bands, encode, renderPlan, stageHtml } from "./lib/stage.mjs";
+import { CREDIT, DEFAULT_THEME, TICK_SOURCE, bands, encode, renderPlan, sideLayout, stageHtml } from "./lib/stage.mjs";
 
 const VERSION = toolVersion();
-const USAGE = "node scripts/story.mjs <story.json | story.html> <out.mp4> [--canvas=portrait|square|landscape|WxH] [--viewport=390x844] [--frame=x,y,w,h] [--fps=30] [--duration=10] [--frames=folder] [--play]";
+const USAGE = "node scripts/story.mjs <story.json | story.html> <out.mp4> [--canvas=portrait|square|landscape|WxH] [--layout=stack|side] [--viewport=390x844] [--frame=x,y,w,h] [--fps=30] [--duration=10] [--frames=folder] [--play]";
 
 // Step names choose an annotation, as in the original: "Spacing" measures gaps, "Details" outlines
 // corners. Mobile additions: "Touch" sizes targets, "Safe area" shows insets.
+const KINDS = ["notes", "targets", "sizes", "contrast", "insets", "spacing", "details"];
+
 export function kindOf(name) {
   if (/spac/i.test(name)) return "spacing";
   if (/detail|radius|corner/i.test(name)) return "details";
@@ -70,7 +72,11 @@ export function loadStory(input, overrides = {}) {
       return { path, full, text: readFileSync(full, "utf8") };
     }) : [];
     const highlight = (value.highlight ?? []).map((item) => (typeof item === "string" ? { selector: item, label: "" } : item));
-    return { name: value.name, caption: value.caption ?? value.name, css, highlight, targets: value.targets ?? [], kind: value.kind ?? (highlight.length ? "notes" : kindOf(value.name)) };
+    const kind = value.kind ?? (highlight.length ? "notes" : kindOf(value.name));
+    if (kind && !KINDS.includes(kind)) throw new UsageError(`step "${value.name}" has kind "${kind}"; use one of ${KINDS.join(", ")}`);
+    // zoom: a region of the viewport the camera moves to for this step, or "full" to move back out.
+    const zoom = value.zoom === undefined ? undefined : value.zoom === "full" || value.zoom === null ? null : parseRect(value.zoom, `step "${value.name}" zoom`);
+    return { name: value.name, caption: value.caption ?? value.name, css, highlight, measure: value.measure ?? value.targets ?? [], min: value.min, zoom, kind };
   });
   if (!steps.length) throw new UsageError(`${input} has no steps. Add "steps" to the JSON, or <meta name="unslop-steps" content="Spacing, Color"> to the HTML`);
   const viewport = parseSize(overrides.viewport ?? story.viewport ?? "390x844", "viewport");
@@ -79,6 +85,9 @@ export function loadStory(input, overrides = {}) {
   let frameValue = overrides.frame ?? story.frames?.[canvasName] ?? story.frame;
   if (Array.isArray(frameValue) && frameValue[3] === null) frameValue = [frameValue[0], frameValue[1], frameValue[2], viewport.height - frameValue[1]];
   const frame = resolveFrame(frameValue, viewport);
+  for (const step of steps) if (step.zoom) resolveFrame(step.zoom, viewport);
+  const layout = String(overrides.layout ?? story.layouts?.[canvasName] ?? story.layout ?? (canvas.width / canvas.height >= 0.9 ? "side" : "stack"));
+  if (!["stack", "side"].includes(layout)) throw new UsageError(`layout must be stack or side, got "${layout}"`);
   const device = normalizeDevice({ id: "story", viewport, scale: 1, safeArea: story.safeArea ?? {} });
   const sourcePath = resolve(root, story.source.split("?")[0]);
   if (!existsSync(sourcePath)) throw new UsageError(`story source not found: ${story.source}`);
@@ -100,18 +109,23 @@ export function loadStory(input, overrides = {}) {
     viewport,
     canvas,
     canvasName,
+    layout,
     frame,
     safeArea: device.safeArea,
     duration: Number(overrides.duration ?? story.duration ?? 10),
     fps: Number(overrides.fps ?? story.fps ?? 30),
     screenRadius: Number(story.screenRadius ?? 40),
+    deviceChrome: Boolean(story.deviceChrome),
+    // Transition timing in ms, and how long a problem is marked before it changes, in seconds.
+    // Defaults follow the original: 700 ms layout, 900 ms colour, a wave of up to 420 ms.
+    motion: { layout: 700, tint: 900, wave: 420, read: 0.75, ...(story.motion ?? {}) },
     theme: { ...DEFAULT_THEME, ...(story.theme ?? {}) },
   };
 }
 
 export function storyLayout(story) {
   const b = bands(story.canvas);
-  const layout = stageLayout({ canvas: story.canvas, region: story.frame, padding: b.padding, top: b.top, bottom: b.bottom });
+  const layout = story.layout === "side" ? sideLayout({ canvas: story.canvas, region: story.frame }) : stageLayout({ canvas: story.canvas, region: story.frame, padding: b.padding, top: b.top, bottom: b.bottom });
   const [screen] = layout.screens;
   // Rounded corners only where the crop meets the viewport edge, so a crop never looks like a device.
   const fullWidth = story.frame.x === 0 && story.frame.width === story.viewport.width;
@@ -119,14 +133,24 @@ export function storyLayout(story) {
   return { ...layout, screen: { ...screen, radius }, readability: readability({ scale: layout.scale, canvas: story.canvas }) };
 }
 
-export const runtime = (steps, minTarget) => `
+export const runtime = (steps, minTarget, chrome = false, motion = { layout: 700, tint: 900, wave: 420 }) => `
 (() => {
   const red = "#ff4d6a";
   const spring = "cubic-bezier(0.3, 1.12, 0.45, 1)";
   const ease = "cubic-bezier(0.45, 0, 0.2, 1)";
   const layout = ["padding", "margin", "gap", "row-gap", "column-gap", "width", "height", "min-width", "min-height", "max-width", "max-height", "top", "right", "bottom", "left", "inset", "font-size", "line-height", "letter-spacing", "font-weight", "transform", "translate", "scale", "rotate", "border-width", "outline-width", "flex-basis", "flex-grow", "grid-template-columns", "grid-template-rows"];
   const tint = ["color", "background-color", "border-color", "outline-color", "fill", "stroke", "stroke-dashoffset", "stroke-width", "box-shadow", "text-shadow", "border-radius", "opacity", "filter", "backdrop-filter", "clip-path", "text-decoration-color", "-webkit-text-fill-color"];
-  const transition = [...layout.map((p) => p + " 700ms " + spring + " var(--wave, 0ms)"), ...tint.map((p) => p + " 900ms " + ease + " var(--wave, 0ms)")].join(", ");
+  const timing = (p) => p + (layout.includes(p) ? " ${motion.layout}ms " + spring : " ${motion.tint}ms " + ease) + " var(--wave, 0ms)";
+  const transition = [...layout, ...tint].map(timing).join(", ");
+  // Inherited properties transition only where an element's own value changes. When a descendant
+  // also transitions a value it merely inherits, every seek of the ancestor's animation starts a
+  // fresh transition on the descendant, and the change visibly replays from the old value.
+  const INHERITED = ["color", "-webkit-text-fill-color", "font-size", "line-height", "letter-spacing", "font-weight"];
+  // Properties that default to currentColor change on every frame while colour animates. Given
+  // their own transitions they restart each frame and lag far behind, so where they equal the text
+  // colour in both states they follow it instead.
+  const CURRENT = { "border-color": ["border-top-color", "border-right-color", "border-bottom-color", "border-left-color"], "outline-color": ["outline-color"], "text-decoration-color": ["text-decoration-color"], "-webkit-text-fill-color": ["-webkit-text-fill-color"], fill: ["fill"], stroke: ["stroke"] };
+  const READ = [...INHERITED, ...new Set(Object.values(CURRENT).flat())];
   const rise = "cubic-bezier(0.17, 0.84, 0.44, 1)";
   const steps = ${JSON.stringify(steps)};
   const minTarget = ${JSON.stringify(minTarget)};
@@ -137,15 +161,20 @@ export const runtime = (steps, minTarget) => `
     div.swap, p.swap, h1.swap, h2.swap, h3.swap, li.swap { display: grid; }
     .swap > .from, .swap > .to { grid-area: 1 / 1; }
     .swap > .to { opacity: 0; pointer-events: none; }
+    /* Outgoing words shrink away and incoming words grow to their own size, so a swap ends with
+       the box the new words need, not the larger of the two. */
+    .swap > .from, .swap > .to { overflow: hidden; }
+    .swap > .to { max-width: 0; max-height: 0; }
     .swap > .to .ch { display: inline-block; opacity: 0; transform: translateY(40%); filter: blur(8px); }
     html.story-live .swap > .to .ch { transition: opacity 700ms \${rise} calc(var(--wave, 0ms) + 140ms + var(--ci) * 16ms), transform 700ms \${rise} calc(var(--wave, 0ms) + 140ms + var(--ci) * 16ms), filter 700ms \${rise} calc(var(--wave, 0ms) + 140ms + var(--ci) * 16ms) !important; }
     [data-in] { opacity: 0; transform: translateY(10px) scale(0.98); }
+    html.story-measure *, html.story-measure *::before, html.story-measure *::after, html.story-measure .swap > .to .ch { transition: none !important; }
   \`;
   steps.forEach((_, index) => {
     const k = index + 1;
     css += \`
-      html.s\${k} .swap[data-at="\${k}"] > .from { opacity: 0; filter: blur(10px); transform: translateY(-14px); }
-      html.s\${k} .swap[data-at="\${k}"] > .to { opacity: 1; }
+      html.s\${k} .swap[data-at="\${k}"] > .from { opacity: 0; filter: blur(10px); transform: translateY(-14px); max-width: 0 !important; max-height: 0 !important; white-space: nowrap; }
+      html.s\${k} .swap[data-at="\${k}"] > .to { opacity: 1; max-width: var(--to-w, none); max-height: var(--to-h, none); }
       html.s\${k} .swap[data-at="\${k}"] > .to .ch { opacity: 1; transform: none; filter: none; }
       html.s\${k} [data-in="\${k}"] { opacity: 1; transform: none; }
       html.s\${k} [data-out="\${k}"] { opacity: 0; max-height: 0 !important; max-width: 0 !important; margin-top: 0 !important; margin-bottom: 0 !important; padding: 0 !important; border-width: 0 !important; }
@@ -182,7 +211,13 @@ export const runtime = (steps, minTarget) => `
     walk(node);
   }
 
-  const conf = window.parent.__stage.conf;
+  // Where the page is on the stage right now. It moves when the camera zooms, so it is read live.
+  const frameEl = window.parent.document.getElementById("page");
+  const conf = {
+    get x() { return frameEl.getBoundingClientRect().left; },
+    get y() { return frameEl.getBoundingClientRect().top; },
+    get scale() { return frameEl.getBoundingClientRect().width / innerWidth; },
+  };
   const layer = () => window.parent.document.getElementById("story-layer");
   const box = (el) => el.getBoundingClientRect();
   const sx = (x) => conf.x + x * conf.scale;
@@ -196,6 +231,23 @@ export const runtime = (steps, minTarget) => `
     return node;
   }
   const rect = (left, top, width, height) => ({ left: sx(left) + "px", top: sy(top) + "px", width: width * conf.scale + "px", height: height * conf.scale + "px" });
+  // Tags stay inside the visible screen, so a zoom or an element at the edge never cuts them off.
+  const screenBox = () => window.parent.document.getElementById("screen-0").getBoundingClientRect();
+  function place(tag, x, y, align = "left") {
+    const width = tag.offsetWidth;
+    const edge = screenBox();
+    let left = align === "center" ? x - width / 2 : align === "right" ? x - width : x;
+    left = Math.min(Math.max(left, edge.left + 6), edge.right - width - 6);
+    Object.assign(tag.style, { left: left + "px", top: y + "px", translate: "0 0" });
+  }
+  // The box of the text itself, not of the block it sits in, so a full-width heading is measured
+  // where its words are.
+  const textBox = (el) => {
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    const b = range.getBoundingClientRect();
+    return b.width > 0 ? b : el.getBoundingClientRect();
+  };
   const onScreen = (el) => { const b = box(el); return b.width > 2 && b.height > 2 && b.bottom > 0 && b.top < innerHeight; };
 
   function marked(list) {
@@ -216,8 +268,8 @@ export const runtime = (steps, minTarget) => `
         const p = pad / conf.scale;
         Object.assign(wrap.style, rect(b.left - p, b.top - p, b.width + p * 2, b.height + p * 2));
         if (tag) {
-          const above = sy(b.top - p) - 46 > conf.y;
-          Object.assign(tag.style, { left: Math.max(conf.x + 4, sx(b.left - p)) + "px", top: (above ? sy(b.top - p) - 44 : sy(b.bottom + p) + 10) + "px" });
+          const above = sy(b.top - p) - 46 > screenBox().top;
+          place(tag, sx(b.left - p), above ? sy(b.top - p) - 44 : sy(b.bottom + p) + 10);
         }
       }
     };
@@ -232,25 +284,88 @@ export const runtime = (steps, minTarget) => `
   }
 
   function targets(step) {
-    const els = (step.targets.length ? step.targets.flatMap((selector) => [...document.querySelectorAll(selector)]) : [...document.querySelectorAll("[data-target]")]).filter(onScreen).slice(0, 6);
+    const els = pick(step, "[data-target]");
     const items = els.map((el) => ({ el, wrap: put("s-fade", {}, '<div class="s-box" style="position:absolute;inset:0"></div>'), tag: put("s-tag s-fade", {}) }));
     return () => {
       for (const { el, wrap, tag } of items) {
         const b = box(el);
         Object.assign(wrap.style, rect(b.left, b.top, b.width, b.height));
         wrap.firstChild.style.borderRadius = Math.min(parseFloat(getComputedStyle(el).borderTopLeftRadius) || 0, b.height / 2) * conf.scale + "px";
-        const text = Math.round(b.width) + " × " + Math.round(b.height);
+        // The shown size is the one judged, so a tag never reads 44 while still marked too small.
+        const w = Math.floor(b.width + 0.05), h = Math.floor(b.height + 0.05);
+        const text = w + " × " + h;
         if (tag.textContent !== text) tag.textContent = text;
-        const small = b.width < minTarget - 0.5 || b.height < minTarget - 0.5;
+        const small = w < minTarget || h < minTarget;
         tag.classList.toggle("s-ok", !small);
         wrap.classList.toggle("s-ok", !small);
-        Object.assign(tag.style, { left: sx(b.left) + "px", top: sy(b.bottom) + 10 + "px" });
+        place(tag, sx(b.left + b.width / 2), sy(b.bottom) + 10, "center");
+      }
+    };
+  }
+
+  function pick(step, fallback) {
+    const list = step.measure && step.measure.length ? step.measure.flatMap((selector) => [...document.querySelectorAll(selector)]) : [...document.querySelectorAll(fallback)];
+    return list.filter(onScreen).slice(0, 8);
+  }
+
+  // Text sizes, counted live as they change. Red below the minimum (12 px unless the step says).
+  function sizes(step) {
+    const min = step.min ?? 12;
+    const items = pick(step, "[data-size]").map((el) => ({ el, wrap: put("s-fade", {}, '<div class="s-box" style="position:absolute;inset:0"></div>'), tag: put("s-tag s-fade", {}) }));
+    return () => {
+      for (const { el, wrap, tag } of items) {
+        const b = textBox(el);
+        const size = parseFloat(getComputedStyle(el).fontSize);
+        Object.assign(wrap.style, rect(b.left - 3, b.top - 2, b.width + 6, b.height + 4));
+        const text = (Math.round(size * 10) / 10).toString().replace(/\\.0$/, "") + " px";
+        if (tag.textContent !== text) tag.textContent = text;
+        tag.classList.toggle("s-ok", size >= min - 0.05);
+        wrap.classList.toggle("s-ok", size >= min - 0.05);
+        const right = sx(b.right) + 10;
+        if (right + tag.offsetWidth < screenBox().right - 6) place(tag, right, sy(b.top + b.height / 2) - 20);
+        else place(tag, sx(b.left), sy(b.bottom) + 8);
+      }
+    };
+  }
+
+  // Contrast of text against the solid background behind it, counted live. Gradient or image layers
+  // over that background are not included, so give them the solid colour they sit on.
+  function contrast(step) {
+    const parse = (value) => (value.match(/[\\d.]+/g) || [0, 0, 0, 0]).map(Number);
+    const lum = ([r, g, b]) => [r, g, b].map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }).reduce((sum, v, i) => sum + v * [0.2126, 0.7152, 0.0722][i], 0);
+    const backdrop = (el) => {
+      const layers = [];
+      for (let node = el; node; node = node.parentElement) {
+        const [r, g, b, a = 1] = parse(getComputedStyle(node).backgroundColor);
+        if (a > 0) layers.push([r, g, b, a]);
+        if (a >= 1) break;
+      }
+      return layers.reverse().reduce((under, [r, g, b, a]) => [r * a + under[0] * (1 - a), g * a + under[1] * (1 - a), b * a + under[2] * (1 - a)], [255, 255, 255]);
+    };
+    const items = pick(step, "[data-contrast]").map((el) => ({ el, wrap: put("s-fade", {}, '<div class="s-box" style="position:absolute;inset:0"></div>'), tag: put("s-tag s-fade", {}) }));
+    return () => {
+      for (const { el, wrap, tag } of items) {
+        const b = textBox(el);
+        const style = getComputedStyle(el);
+        const [r, g, bl, a = 1] = parse(style.color);
+        const under = backdrop(el);
+        const fg = [r * a + under[0] * (1 - a), g * a + under[1] * (1 - a), bl * a + under[2] * (1 - a)];
+        const one = lum(fg), two = lum(under);
+        const ratio = (Math.max(one, two) + 0.05) / (Math.min(one, two) + 0.05);
+        const size = parseFloat(style.fontSize);
+        const large = size >= 24 || (size >= 18.66 && Number(style.fontWeight) >= 700);
+        const ok = ratio >= (step.min ?? (large ? 3 : 4.5)) - 0.005;
+        Object.assign(wrap.style, rect(b.left - 4, b.top - 3, b.width + 8, b.height + 6));
+        const text = ratio.toFixed(1) + " : 1";
+        if (tag.textContent !== text) tag.textContent = text;
+        tag.classList.toggle("s-ok", ok);
+        wrap.classList.toggle("s-ok", ok);
+        place(tag, sx(b.left), sy(b.bottom) + 10);
       }
     };
   }
 
   function insets() {
-    const style = getComputedStyle(document.documentElement);
     const probe = document.createElement("div");
     probe.style.cssText = "position:fixed;visibility:hidden;padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)";
     document.body.appendChild(probe);
@@ -260,12 +375,13 @@ export const runtime = (steps, minTarget) => `
     const bands = [];
     if (top) bands.push({ y: 0, h: top, label: "Status bar " + Math.round(top) });
     if (bottom) bands.push({ y: innerHeight - bottom, h: bottom, label: "Home indicator " + Math.round(bottom) });
-    bands.forEach(({ y, h, label }) => {
-      put("s-fade s-band", rect(0, y, innerWidth, h));
-      const tag = put("s-tag s-fade", { left: sx(innerWidth) - 12 + "px", top: sy(y) + (y ? -44 : h * conf.scale + 8) + "px", translate: "-100% 0" });
-      tag.textContent = label;
-    });
-    return null;
+    const items = bands.map((item) => ({ ...item, band: put("s-fade s-band", {}), tag: Object.assign(put("s-tag s-fade", { translate: "-100% 0" }), { textContent: item.label }) }));
+    return () => {
+      for (const { y, h, band, tag } of items) {
+        Object.assign(band.style, rect(0, y, innerWidth, h));
+        Object.assign(tag.style, { left: sx(innerWidth) - 12 + "px", top: sy(y) + (y ? -44 : h * conf.scale + 8) + "px" });
+      }
+    };
   }
 
   function spacing() {
@@ -338,7 +454,34 @@ export const runtime = (steps, minTarget) => `
     };
   }
 
-  const kinds = { audit, spacing, details, notes, targets, insets };
+  // Presentation only: where the device itself draws, inside the emulated insets, so a header
+  // under the Dynamic Island or a button on the home indicator is visible. Drawn in the page so it
+  // moves with the camera, and excluded from the story's transitions.
+  function device() {
+    const probe = document.createElement("div");
+    probe.style.cssText = "position:fixed;visibility:hidden;padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)";
+    document.body.appendChild(probe);
+    const top = parseFloat(getComputedStyle(probe).paddingTop) || 0;
+    const bottom = parseFloat(getComputedStyle(probe).paddingBottom) || 0;
+    probe.remove();
+    const layer = document.createElement("div");
+    layer.id = "story-device";
+    layer.setAttribute("aria-hidden", "true");
+    layer.style.cssText = "position:fixed;inset:0;pointer-events:none;z-index:2147483647;transition:none!important";
+    if (top >= 50) layer.innerHTML += '<i style="position:absolute;left:50%;top:11px;width:125px;height:37px;margin-left:-62.5px;border-radius:19px;background:#000;transition:none!important"></i>';
+    else if (top >= 40) layer.innerHTML += '<i style="position:absolute;left:50%;top:0;width:160px;height:31px;margin-left:-80px;border-radius:0 0 20px 20px;background:#000;transition:none!important"></i>';
+    if (bottom) layer.innerHTML += '<i style="position:absolute;left:50%;bottom:8px;width:134px;height:5px;margin-left:-67px;border-radius:3px;background:#fff;mix-blend-mode:difference;transition:none!important"></i>';
+    // A status bar in the top inset: the time and battery, drawn the way the system would.
+    if (top >= 40) {
+      const ear = (innerWidth - (top >= 50 ? 125 : 160)) / 2;
+      const middle = top >= 50 ? 29.5 : 15.5;
+      layer.innerHTML += '<span style="position:absolute;left:0;width:' + ear + 'px;top:' + (middle - 11) + 'px;text-align:center;font:600 17px/22px -apple-system,system-ui,sans-serif;color:#fff;mix-blend-mode:difference;transition:none!important">9:41</span>' +
+        '<i style="position:absolute;left:' + (innerWidth - ear / 2 - 13) + 'px;top:' + (middle - 6) + 'px;width:24px;height:12px;border:1.5px solid #fff;border-radius:4px;box-sizing:border-box;mix-blend-mode:difference;transition:none!important"><i style="position:absolute;inset:1.5px 5px 1.5px 1.5px;border-radius:1.5px;background:#fff;transition:none!important"></i></i>';
+    }
+    document.body.appendChild(layer);
+  }
+
+  const kinds = { audit, spacing, details, notes, targets, sizes, contrast, insets };
   let current = null;
   let stepping = false;
 
@@ -348,6 +491,11 @@ export const runtime = (steps, minTarget) => `
       style.id = "story-style";
       style.textContent = css;
       document.head.appendChild(style);
+      if (${JSON.stringify(chrome)}) device();
+      // Chromium restarts colour transitions on every style recalculation while the root's
+      // color-scheme changes, so text colours stall until the story stops seeking. Hold it at its
+      // starting value; it only affects built-in controls and scrollbars.
+      document.documentElement.style.setProperty("color-scheme", getComputedStyle(document.documentElement).colorScheme, "important");
       document.querySelectorAll(".swap > .to").forEach(letters);
       document.querySelectorAll("[data-out]").forEach((el) => {
         const b = box(el);
@@ -356,10 +504,14 @@ export const runtime = (steps, minTarget) => `
         el.style.maxHeight = Math.ceil(b.height) + "px";
         el.style.maxWidth = Math.ceil(b.width) + "px";
       });
+      // The wave never decreases from a parent to its children. If a child finished an inherited
+      // transition (colour, size) before its parent did, Chromium would start the child's transition
+      // again from the old value when the parent's ended, and the change would visibly replay.
       document.querySelectorAll("body *").forEach((el) => {
         const b = box(el);
-        const wave = Math.round(Math.min(420, Math.max(0, b.top) / innerHeight * 320 + Math.max(0, b.left) / innerWidth * 100));
-        el.style.setProperty("--wave", wave + "ms");
+        const own = Math.round(Math.min(${motion.wave}, (Math.max(0, b.top) / innerHeight * 320 + Math.max(0, b.left) / innerWidth * 100) * ${motion.wave} / 420));
+        const inherited = parseFloat(el.parentElement?.style.getPropertyValue("--wave")) || 0;
+        el.style.setProperty("--wave", Math.max(own, inherited) + "ms");
       });
       document.querySelectorAll("*").forEach((el) => {
         if (getComputedStyle(el).animationName !== "none") el.style.animationPlayState = "paused";
@@ -387,14 +539,66 @@ export const runtime = (steps, minTarget) => `
       if (current) current();
     },
     step(k) {
+      const root = document.documentElement;
       const text = steps[k - 1].css;
-      if (text) {
-        const style = document.createElement("style");
-        style.dataset.storyStep = String(k);
-        style.textContent = text;
-        document.head.appendChild(style);
+      const style = document.createElement("style");
+      style.dataset.storyStep = String(k);
+      style.textContent = text || "";
+      const apply = (on) => {
+        if (on) document.head.appendChild(style);
+        else style.remove();
+        root.classList.toggle("s" + k, on);
+      };
+      // Where does this step leave each inherited property? Measure with transitions off, undo,
+      // then let only the elements that own a change transition it.
+      const elements = [...document.querySelectorAll("body, body *")];
+      elements.forEach((el) => el.style.removeProperty("transition"));
+      // Swaps at this step: pin the outgoing words at their current size so they can shrink, and
+      // let the incoming words take their natural size while the step is measured.
+      const swaps = [...document.querySelectorAll('.swap[data-at="' + k + '"]')].map((swap) => ({ from: swap.querySelector(":scope > .from"), to: swap.querySelector(":scope > .to") })).filter((item) => item.from && item.to);
+      for (const { from, to } of swaps) {
+        const r = from.getBoundingClientRect();
+        from.style.maxWidth = Math.ceil(r.width + 1) + "px";
+        from.style.maxHeight = Math.ceil(r.height + 1) + "px";
+        to.style.setProperty("--to-w", "none");
+        to.style.setProperty("--to-h", "none");
       }
-      document.documentElement.classList.add("s" + k);
+      const read = () => new Map(elements.map((el) => { const cs = getComputedStyle(el); return [el, Object.fromEntries(READ.map((p) => [p, cs.getPropertyValue(p)]))]; }));
+      const before = read();
+      root.classList.add("story-measure");
+      apply(true);
+      const after = read();
+      const targets = swaps.map(({ to }) => { const r = to.getBoundingClientRect(); return { width: r.width, height: r.height, line: parseFloat(getComputedStyle(to).lineHeight) || r.height }; });
+      apply(false);
+      root.offsetHeight;
+      root.classList.remove("story-measure");
+      root.offsetHeight;
+      for (const el of elements) {
+        const now = after.get(el), was = before.get(el);
+        const parent = el.parentElement;
+        const follows = parent && after.has(parent) ? INHERITED.filter((p) => now[p] === after.get(parent)[p] && was[p] === before.get(parent)[p]) : [];
+        for (const [name, longhands] of Object.entries(CURRENT)) {
+          if (longhands.every((p) => now[p] === now.color && was[p] === was.color)) follows.push(name);
+        }
+        if (follows.length) el.style.setProperty("transition", [...layout, ...tint].filter((p) => !follows.includes(p)).map(timing).join(", "), "important");
+      }
+      swaps.forEach(({ to }, i) => {
+        to.style.setProperty("--to-w", Math.ceil(targets[i].width + 1) + "px");
+        to.style.setProperty("--to-h", Math.ceil(targets[i].height + 1) + "px");
+        // One-line words stay on one line while their box grows, instead of reflowing letter by letter.
+        if (targets[i].height < targets[i].line * 1.6) to.style.whiteSpace = "nowrap";
+      });
+      apply(true);
+    },
+    // Letter-by-letter words lose their kerning. Once the swaps have settled, put plain text back so
+    // the last frames show the page exactly as it is.
+    commit() {
+      for (const swap of document.querySelectorAll(".swap")) {
+        const at = Number(swap.dataset.at);
+        if (!document.documentElement.classList.contains("s" + at)) continue;
+        const to = swap.querySelector(":scope > .to");
+        swap.replaceWith(document.createTextNode(to ? to.textContent : ""));
+      }
     },
     show(kind, k) {
       const node = layer();
@@ -467,7 +671,11 @@ export async function renderStory(story, { out, framesDir, play = false } = {}) 
   const layout = storyLayout(story);
   const { scale, screen } = layout;
   const minTarget = 44;
-  const iframeStyle = `position:absolute;left:0;top:0;border:0;width:${story.viewport.width}px;height:${story.viewport.height}px;transform-origin:0 0;transform:scale(${scale}) translate(${-story.frame.x}px, ${-story.frame.y}px);background:#fff`;
+  const iframeStyle = `position:absolute;left:0;top:0;border:0;width:${story.viewport.width}px;height:${story.viewport.height}px;transform-origin:0 0;transform:scale(${scale}) translate(${-story.frame.x}px, ${-story.frame.y}px);background:#fff;transition:transform 900ms cubic-bezier(0.65, 0, 0.35, 1)`;
+  // Annotations are clipped to the screen, with a margin for tags, so a zoom never leaves redlines
+  // floating over the captions.
+  const margin = 64 * bands(story.canvas).unit;
+  const clip = `#story-layer { clip-path: inset(${round(screen.y - margin)}px ${round(story.canvas.width - screen.x - screen.width - margin)}px ${round(story.canvas.height - screen.y - screen.height - margin)}px ${round(screen.x - margin)}px); }`;
   const html = stageHtml({
     canvas: story.canvas,
     theme: story.theme,
@@ -475,9 +683,26 @@ export async function renderStory(story, { out, framesDir, play = false } = {}) 
     caption: story.intro,
     label: story.label,
     screens: [screen],
+    panel: layout.panel ?? null,
     screenHtml: () => `<iframe id="page" title="Story page" src="${sourceSrc(story.source)}" style="${iframeStyle}"></iframe>`,
-    extraCss: layerCss(bands(story.canvas).unit),
-    script: `<script>window.__stage = { conf: { scale: ${scale}, x: ${screen.x - story.frame.x * scale}, y: ${screen.y - story.frame.y * scale} } }; window.__tick = ${TICK_SOURCE};</script>`,
+    extraCss: layerCss(bands(story.canvas).unit) + clip,
+    script: `<script>
+      window.__tick = ${TICK_SOURCE};
+      // The camera: move the page so a region of the viewport fills the screen, or back to the frame.
+      window.__zoom = (region) => {
+        const page = document.getElementById("page");
+        const box = { width: ${screen.width}, height: ${screen.height} };
+        const viewport = ${JSON.stringify(story.viewport)};
+        const frame = ${JSON.stringify(story.frame)};
+        const base = ${scale};
+        const target = region || frame;
+        const s = Math.max(base, Math.min(box.width / target.width, box.height / target.height));
+        const w = box.width / s, h = box.height / s;
+        const left = region ? Math.min(Math.max(0, target.x + target.width / 2 - w / 2), viewport.width - w) : frame.x;
+        const top = region ? Math.min(Math.max(0, target.y + target.height / 2 - h / 2), viewport.height - h) : frame.y;
+        page.style.transform = "scale(" + s + ") translate(" + -left + "px, " + -top + "px)";
+      };
+    </script>`,
   });
   const { server, base } = await serveFolder(story.root, { "/__stage.html": html });
   const { browser, executablePath } = await launchBrowser({ headless: !play });
@@ -512,8 +737,8 @@ export async function renderStory(story, { out, framesDir, play = false } = {}) 
       await document.fonts.ready;
     });
     if (story.prepare) await frame.addScriptTag({ content: readFileSync(story.prepare, "utf8") });
-    const steps = story.steps.map((step) => ({ name: step.name, css: step.css.map((item) => item.text).join("\n"), highlight: step.highlight, targets: step.targets }));
-    await frame.addScriptTag({ content: runtime(steps, minTarget) });
+    const steps = story.steps.map((step) => ({ name: step.name, css: step.css.map((item) => item.text).join("\n"), highlight: step.highlight, measure: step.measure, min: step.min }));
+    await frame.addScriptTag({ content: runtime(steps, minTarget, story.deviceChrome, story.motion) });
     await frame.evaluate(() => window.__story.install());
     await page.waitForTimeout(300);
 
@@ -521,43 +746,67 @@ export async function renderStory(story, { out, framesDir, play = false } = {}) 
     const call = (name, ...values) => () => frame.evaluate(([name, values]) => window.__story[name](...values), [name, values]);
     const caption = (text) => () => page.evaluate((text) => window.__caption(text), text);
     const counter = (done) => () => page.evaluate(([count, done]) => window.__counter(count, done), [story.steps.length, done]);
+    const zoom = (region) => () => page.evaluate((region) => window.__zoom(region), region);
     const plan = [];
     const at = (time, run) => plan.push({ time, run });
-    // Each problem is marked for most of a second before it changes, so a viewer reads it first.
-    const introHold = 1.5;
-    const outroHold = 2.0;
+    // Each problem is marked before it changes, so a viewer reads it first, and the annotation stays
+    // until the change has finished, so the fixed value is seen. Transitions are never compressed;
+    // if the story would run past its duration, reading time and holds shrink, to a floor.
+    const settleAfter = (Math.max(story.motion.layout, story.motion.tint) + story.motion.wave) / 1000 + 0.05;
+    let zoomedState = null;
+    const movesPlan = story.steps.map((step) => {
+      const moving = step.zoom !== undefined && JSON.stringify(step.zoom) !== JSON.stringify(zoomedState);
+      if (step.zoom !== undefined) zoomedState = step.zoom;
+      return moving;
+    });
+    const fixedTime = story.steps.reduce((sum, step, index) => sum + (movesPlan[index] ? 0.35 : 0) + (step.kind ? 0.05 + settleAfter : 0.25 + settleAfter), 0) + (zoomedState ? 0.35 : 0);
+    const flexible = 1.4 + 1.8 + story.steps.reduce((sum, step) => sum + (step.kind ? story.motion.read + 0.3 : 0.2), 0);
+    const squeeze = Math.max(0.6, Math.min(1, (story.duration - fixedTime) / flexible));
+    const introHold = 1.4 * squeeze;
+    const outroHold = 1.8 * squeeze;
     at(0, counter(0));
     let cursor = introHold;
     if (slop) {
-      at(cursor - 0.9, call("show", "audit", 0));
+      at(Math.max(0.2, cursor - 0.9), call("show", "audit", 0));
       at(cursor, call("clear"));
       cursor += 0.3;
     }
-    const blocks = story.steps.map((step) => (step.kind ? 2.0 : 1.4));
-    const fit = Math.min(1, (story.duration - cursor - outroHold) / blocks.reduce((sum, block) => sum + block, 0));
+    // A camera move takes its own time before the problem is marked.
     story.steps.forEach((step, index) => {
       const k = index + 1;
       at(cursor, caption(`${k} · ${step.caption}`));
-      if (step.kind) {
-        at(cursor + 0.05 * fit, call("show", step.kind, k));
-        at(cursor + 0.8 * fit, call("step", k));
-        at(cursor + 0.8 * fit, counter(k));
-        at(cursor + 1.5 * fit, call("settle"));
-        at(cursor + 1.9 * fit, call("clear"));
-      } else {
-        at(cursor + 0.25 * fit, call("step", k));
-        at(cursor + 0.25 * fit, counter(k));
+      if (movesPlan[index]) {
+        at(cursor, zoom(step.zoom));
+        cursor += 0.35;
       }
-      cursor += blocks[index] * fit;
+      if (step.kind) {
+        at(cursor + 0.05, call("show", step.kind, k));
+        const change = cursor + 0.05 + story.motion.read * squeeze;
+        at(change, call("step", k));
+        at(change, counter(k));
+        at(change + settleAfter, call("settle"));
+        cursor = change + settleAfter + 0.3 * squeeze;
+        at(cursor, call("clear"));
+      } else {
+        const change = cursor + 0.2 * squeeze;
+        at(change, call("step", k));
+        at(change, counter(k));
+        cursor = change + settleAfter;
+      }
     });
+    if (zoomedState) {
+      at(cursor, zoom(null));
+      cursor += 0.35;
+    }
     at(cursor, caption(story.outro));
+    at(cursor + 0.05, call("commit"));
     total = cursor + outroHold;
 
     if (play) {
       console.log("playing in the browser window, close it to stop");
       while (browser.isConnected()) {
         await frame.evaluate(() => window.__story.reset());
-        await page.evaluate((text) => window.__caption(text), story.intro);
+        await page.evaluate((text) => { window.__caption(text); window.__zoom(null); }, story.intro);
         await renderPlan({ page, plan: [...plan], total, play: true });
       }
     } else {
@@ -565,8 +814,8 @@ export async function renderStory(story, { out, framesDir, play = false } = {}) 
       frames = await renderPlan({
         page, plan, total, fps: story.fps, framesDir: folder,
         tick: async (ms) => {
-          await frame.evaluate(() => window.__story.follow());
           await page.evaluate((ms) => window.__tick(ms, [document, document.getElementById("page").contentDocument]), ms);
+          await frame.evaluate(() => window.__story.follow());
         },
       });
       if (out) {
@@ -594,13 +843,13 @@ export async function renderStory(story, { out, framesDir, play = false } = {}) 
     viewport: story.viewport,
     safeArea: story.safeArea,
     frame: story.frame,
-    canvas: { ...story.canvas, preset: story.canvasName },
+    canvas: { ...story.canvas, preset: story.canvasName, layout: story.layout },
     screen: { x: round(screen.x), y: round(screen.y), width: round(screen.width), height: round(screen.height), scale: round(scale, 4) },
     readability: { bodyPoints: round(layout.readability.body, 1), smallPoints: round(layout.readability.small, 1), warnings: layout.readability.warnings },
     fps: story.fps,
     frames,
     seconds: round(total, 2),
-    steps: story.steps.map((step) => ({ name: step.name, caption: step.caption, kind: step.kind })),
+    steps: story.steps.map((step) => ({ name: step.name, caption: step.caption, kind: step.kind, ...(step.zoom !== undefined ? { zoom: step.zoom } : {}) })),
     label: story.label,
     credit: CREDIT,
   };
@@ -622,18 +871,19 @@ function browserVersion(executable) {
 
 if (isMain(import.meta.url)) {
   runCli(async () => {
-    const { positionals, values } = parseArgs(process.argv.slice(2), { flags: ["play"], options: ["canvas", "viewport", "frame", "fps", "duration", "frames"] });
+    const { positionals, values } = parseArgs(process.argv.slice(2), { flags: ["play"], options: ["canvas", "layout", "viewport", "frame", "fps", "duration", "frames"] });
     const [input, out] = positionals;
     if (!input || (!out && !values.play && !values.frames)) throw new UsageError(USAGE);
     const story = loadStory(input, {
       canvas: values.canvas,
+      layout: values.layout,
       viewport: values.viewport,
       frame: values.frame,
       fps: number(values.fps, "fps", { min: 1, max: 120 }),
       duration: number(values.duration, "duration", { min: 3, max: 60 }),
     });
     const layout = storyLayout(story);
-    console.log(`viewport ${story.viewport.width}×${story.viewport.height} · frame ${story.frame.x},${story.frame.y},${story.frame.width}×${story.frame.height} · canvas ${story.canvas.width}×${story.canvas.height} (${story.canvasName}) · screen scale ${layout.scale.toFixed(3)}`);
+    console.log(`viewport ${story.viewport.width}×${story.viewport.height} · frame ${story.frame.x},${story.frame.y},${story.frame.width}×${story.frame.height} · canvas ${story.canvas.width}×${story.canvas.height} (${story.canvasName}, ${story.layout} layout) · screen scale ${layout.scale.toFixed(3)}`);
     console.log(`on a phone: ${layout.readability.body.toFixed(1)} pt for 14 px text, ${layout.readability.small.toFixed(1)} pt for 12 px`);
     layout.readability.warnings.forEach((warning) => console.warn(`warning: ${warning}`));
     const record = await renderStory(story, { out, framesDir: values.frames, play: values.play });

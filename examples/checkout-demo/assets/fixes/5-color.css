@@ -1,0 +1,28 @@
+/* Fix 5 · Colour that passes contrast. White on a pink-to-violet gradient was 2.6:1; the palette
+   now comes from a market stall (paper, produce, a deep green), every text pair passes 4.5:1, and
+   the chosen delivery slot is marked with a check and an outline, not only a colour. */
+
+body { background-color: #F6F3EC; color: #1F2421; }
+.backdrop { opacity: 0; }
+.title [data-copy]:not(:has(.swap)) { background: none; color: inherit; }
+.subtitle { color: #59615B; }
+.icon-btn { background-color: #FFFFFF; color: #1F2421; box-shadow: 0 1px 2px rgba(31, 36, 33, 0.1); }
+.icon-btn .emoji { opacity: 0; }
+.icon-btn svg { opacity: 1; }
+.promo { border-radius: 12px; background-color: #E6EFE6; box-shadow: none; }
+.promo-glow { opacity: 0; }
+.promo-text { color: #22432D; text-align: left; }
+.section { color: #1F2421; }
+.item { border-color: #E6E0D5; background-color: #FFFFFF; box-shadow: 0 1px 2px rgba(31, 36, 33, 0.05); }
+.thumb { background-color: #F2EEE5; box-shadow: none; }
+.meta { color: #5B635C; }
+.qty button { background-color: #F2EEE5; color: #1F2421; }
+.slot { background-color: #FFFFFF; color: #1F2421; box-shadow: inset 0 0 0 1px #D2CBBE; }
+.slot[aria-checked="true"] { background-color: #E6EFE6; color: #1D4A31; box-shadow: inset 0 0 0 2px #2F6B4F; }
+.slot[aria-checked="true"] .check { max-width: 18px; margin-right: 6px; opacity: 1; }
+.summary { border-color: #E6E0D5; background-color: #FFFFFF; }
+.summary div { color: #4A524C; }
+.total { color: #1F2421; }
+.checkout { background-color: #FFFFFF; box-shadow: 0 -1px 0 #E6E0D5; }
+.pay { background-color: #2F6B4F; box-shadow: none; }
+.pay::before { opacity: 0; }

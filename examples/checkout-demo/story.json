@@ -1,0 +1,93 @@
+{
+  "title": "Unslop Mobile · a demo checkout, reviewed",
+  "label": "HTML demo screen · fictional shop · 393×852",
+  "source": "app.html?variant=before",
+  "prepare": "story/prepare.js",
+  "viewport": "393x852",
+  "safeArea": {
+    "top": 59,
+    "bottom": 34
+  },
+  "deviceChrome": true,
+  "screenRadius": 52,
+  "intro": "A vibecoded checkout, on a real phone",
+  "outro": "Unslop Mobile · mobile review for coding agents",
+  "duration": 14,
+  "fps": 30,
+  "steps": [
+    {
+      "name": "Safe areas",
+      "caption": "Clear the Dynamic Island and home indicator",
+      "css": "assets/fixes/1-safe-areas.css",
+      "kind": "insets"
+    },
+    {
+      "name": "Touch targets",
+      "caption": "Targets a thumb can hit",
+      "css": "assets/fixes/2-touch.css",
+      "kind": "targets",
+      "measure": [
+        ".item:nth-child(1) .inc",
+        ".item:nth-child(2) .dec",
+        ".item:nth-child(3) .inc"
+      ],
+      "zoom": [
+        150,
+        130,
+        243,
+        330
+      ]
+    },
+    {
+      "name": "Readable text",
+      "caption": "Text you can read, names that wrap",
+      "css": "assets/fixes/3-text.css",
+      "kind": "sizes",
+      "measure": [
+        ".item:nth-child(1) .meta",
+        ".item:nth-child(2) .name",
+        ".slot:nth-child(1) .slot-label"
+      ],
+      "zoom": [
+        0,
+        110,
+        290,
+        330
+      ]
+    },
+    {
+      "name": "Covered total",
+      "caption": "Nothing covers the total",
+      "css": "assets/fixes/4-covered.css",
+      "highlight": [
+        {
+          "selector": ".fab",
+          "label": "Covers the total"
+        }
+      ],
+      "zoom": [
+        100,
+        560,
+        293,
+        292
+      ]
+    },
+    {
+      "name": "Contrast",
+      "caption": "Colour that passes contrast",
+      "css": "assets/fixes/5-color.css",
+      "kind": "contrast",
+      "measure": [
+        ".promo-text",
+        ".slot[aria-checked='true'] .slot-label"
+      ],
+      "zoom": "full"
+    }
+  ],
+  "motion": {
+    "layout": 650,
+    "tint": 800,
+    "wave": 320,
+    "read": 0.65
+  }
+}
