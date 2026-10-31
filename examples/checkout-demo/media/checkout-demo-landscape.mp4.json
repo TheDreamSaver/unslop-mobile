@@ -1,0 +1,136 @@
+{
+  "tool": "unslop-mobile story 0.1.0",
+  "mode": "css-morph",
+  "note": "Rendered from a browser page by tweening CSS between steps. Not a native screen recording.",
+  "createdAt": "2026-10-31T11:37:30.286Z",
+  "story": {
+    "file": "../story.json",
+    "sha256": "8a611af0efaeb617449b97055f36624d2e07d705493b6d6f88f5117724e34608"
+  },
+  "source": {
+    "file": "../app.html",
+    "query": "variant=before",
+    "sha256": "7224dceea082e5e97e2df0f45643299b9a83be5b199483161892afe2d477df78"
+  },
+  "prepare": {
+    "file": "../story/prepare.js",
+    "sha256": "75fad53cd4b018d75dc82686a5c2ff3cb8999bfd002f35ec102d936b7bfce095"
+  },
+  "stepStyles": [
+    {
+      "step": "Safe areas",
+      "file": "assets/fixes/1-safe-areas.css",
+      "sha256": "3b6d561cc4bbb79649f3b249b8cd9287394d1a2f642952691cd5db0833865047"
+    },
+    {
+      "step": "Touch targets",
+      "file": "assets/fixes/2-touch.css",
+      "sha256": "33d89c730ab753889665a50004d92137df9cd99c10bad99c9bde887c399848e1"
+    },
+    {
+      "step": "Readable text",
+      "file": "assets/fixes/3-text.css",
+      "sha256": "83c18acf1aa4b48c0dc42f75b5b8c50531bd96ccb39b3ec0d258312607d59c4a"
+    },
+    {
+      "step": "Covered total",
+      "file": "assets/fixes/4-covered.css",
+      "sha256": "344af55af286bec2dbc354104a22698b772a3cdab8a951891e743cd46592c68d"
+    },
+    {
+      "step": "Contrast",
+      "file": "assets/fixes/5-color.css",
+      "sha256": "ccd334cd8c53bb545fe17e0c7f72af5e306be2f088bdcc78156c66e455d208ec"
+    }
+  ],
+  "browser": {
+    "version": "Google Chrome 156.0.8078.79"
+  },
+  "viewport": {
+    "width": 393,
+    "height": 852
+  },
+  "safeArea": {
+    "top": 59,
+    "right": 0,
+    "bottom": 34,
+    "left": 0
+  },
+  "frame": {
+    "x": 0,
+    "y": 0,
+    "width": 393,
+    "height": 852
+  },
+  "canvas": {
+    "width": 1920,
+    "height": 1080,
+    "preset": "landscape",
+    "layout": "side"
+  },
+  "screen": {
+    "x": 1255.2,
+    "y": 40,
+    "width": 409.61,
+    "height": 888,
+    "scale": 1.0423
+  },
+  "readability": {
+    "bodyPoints": 3,
+    "smallPoints": 2.5,
+    "warnings": [
+      "14px body text plays at about 3.0 pt on a 390 pt wide phone; crop closer with --frame or use a taller canvas"
+    ]
+  },
+  "fps": 30,
+  "frames": 421,
+  "seconds": 14,
+  "steps": [
+    {
+      "name": "Safe areas",
+      "caption": "Clear the Dynamic Island and home indicator",
+      "kind": "insets"
+    },
+    {
+      "name": "Touch targets",
+      "caption": "Targets a thumb can hit",
+      "kind": "targets",
+      "zoom": {
+        "x": 150,
+        "y": 130,
+        "width": 243,
+        "height": 330
+      }
+    },
+    {
+      "name": "Readable text",
+      "caption": "Text you can read, names that wrap",
+      "kind": "sizes",
+      "zoom": {
+        "x": 0,
+        "y": 110,
+        "width": 290,
+        "height": 330
+      }
+    },
+    {
+      "name": "Covered total",
+      "caption": "Nothing covers the total",
+      "kind": "notes",
+      "zoom": {
+        "x": 100,
+        "y": 560,
+        "width": 293,
+        "height": 292
+      }
+    },
+    {
+      "name": "Contrast",
+      "caption": "Colour that passes contrast",
+      "kind": "contrast",
+      "zoom": null
+    }
+  ],
+  "label": "HTML demo screen · fictional shop · 393×852",
+  "credit": "unslop-mobile · adapted from unslop by @heydamir"
+}

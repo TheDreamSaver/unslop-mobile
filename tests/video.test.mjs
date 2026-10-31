@@ -117,6 +117,27 @@ test("long captions never run into the step counter, in any layout", { skip: awa
   }
 });
 
+test("a bare stage shows only the phone, on a backdrop taken from the page's colours", { skip: await browserSkip() }, async () => {
+  const { launchBrowser } = await import("../scripts/lib/deps.mjs");
+  const { stageHtml } = await import("../scripts/lib/stage.mjs");
+  const bare = storyLayout(loadStory(story, { bare: true }));
+  assert.ok(bare.scale > storyLayout(loadStory(story)).scale, "the phone is larger without the caption band");
+  const { browser } = await launchBrowser();
+  try {
+    const page = await browser.newPage({ viewport: { width: 1080, height: 1920 } });
+    await page.setContent(stageHtml({ canvas: { width: 1080, height: 1920 }, title: "T", caption: "C", label: "L", screens: bare.screens, bare: true, screenHtml: () => "" }));
+    assert.equal(await page.evaluate(() => document.body.innerText.trim()), "", "no text in the frame");
+    const backdrop = (color) => page.evaluate((color) => { window.__backdrop(color); return getComputedStyle(document.body).backgroundImage; }, color);
+    const rgb = (css) => [...css.matchAll(/rgb\((\d+), (\d+), (\d+)\)/g)].map((m) => m.slice(1).map(Number));
+    const [darkCentre] = rgb(await backdrop("rgb(21, 10, 54)"));
+    const [lightCentre] = rgb(await backdrop("rgb(246, 243, 236)"));
+    assert.ok(darkCentre[2] > darkCentre[0] + 30, `a purple screen gives a purple backdrop: ${darkCentre}`);
+    assert.ok(lightCentre.every((v) => v > 200), `a light screen gives a light backdrop: ${lightCentre}`);
+  } finally {
+    await browser.close();
+  }
+});
+
 function comparisonFiles(beforeSize, afterSize, beforeFixture = "fixture@1", afterFixture = "fixture@1") {
   const dir = tempDir();
   writePng(join(dir, "before.png"), beforeSize[0], beforeSize[1], [230, 230, 230]);

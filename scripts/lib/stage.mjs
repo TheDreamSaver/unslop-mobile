@@ -42,7 +42,7 @@ export function sideLayout({ canvas, region }) {
 
 const escape = (value) => String(value ?? "").replace(/[&<>"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[char]);
 
-export function stageHtml({ canvas, theme = DEFAULT_THEME, title = "", caption = "", label = "", screens, screenHtml, panel = null, extraCss = "", script = "" }) {
+export function stageHtml({ canvas, theme = DEFAULT_THEME, title = "", caption = "", label = "", screens, screenHtml, panel = null, bare = false, extraCss = "", script = "" }) {
   const b = bands(canvas);
   const u = (px) => `${round(px * b.unit, 2)}px`;
   const side = panel ? `
@@ -70,16 +70,18 @@ export function stageHtml({ canvas, theme = DEFAULT_THEME, title = "", caption =
   .label { font-weight: 500; font-size: ${u(23)}; line-height: 1.3; color: ${theme.muted}; text-wrap: balance; }
   .credit { font-weight: 500; font-size: ${u(23)}; color: ${theme.muted}; white-space: nowrap; }
   #story-layer { position: absolute; inset: 0; pointer-events: none; z-index: 10; }
-  #story-layer > * { position: absolute; }${side}
+  #story-layer > * { position: absolute; }${side}${bare ? `
+  .screen { box-shadow: 0 0 0 ${u(11)} #0b0b0e, 0 0 0 ${u(12.5)} rgba(255,255,255,0.1), 0 ${u(40)} ${u(100)} rgba(0,0,0,0.4); }` : ""}
   ${extraCss}
 </style></head><body>
-  <div class="band header"><div class="title">${escape(title)}</div><div class="caption" id="caption"><span>${escape(caption)}</span></div><div class="counter" id="counter"></div></div>
+  ${bare ? "" : `<div class="band header"><div class="title">${escape(title)}</div><div class="caption" id="caption"><span>${escape(caption)}</span></div><div class="counter" id="counter"></div></div>`}
   ${screens.map((screen, index) => `<div class="screen" id="screen-${index}" style="left:${round(screen.x)}px;top:${round(screen.y)}px;width:${round(screen.width)}px;height:${round(screen.height)}px;border-radius:${round(screen.radius ?? 0)}px">${screenHtml(index)}</div>`).join("\n  ")}
-  <div class="band footer"><span class="label">${escape(label)}</span><span class="credit">${escape(CREDIT)}</span></div>
+  ${bare ? "" : `<div class="band footer"><span class="label">${escape(label)}</span><span class="credit">${escape(CREDIT)}</span></div>`}
   <div id="story-layer"></div>
   <script>
     window.__caption = (text) => {
       const box = document.getElementById("caption");
+      if (!box) return;
       const old = box.lastElementChild;
       if (old && old.textContent === text) return;
       // The old caption fades out before the new one rises, and is removed when its own transition
@@ -97,6 +99,7 @@ export function stageHtml({ canvas, theme = DEFAULT_THEME, title = "", caption =
     // wraps to more lines never runs into the step counter beneath it.
     window.__fitCaptions = (texts) => {
       const box = document.getElementById("caption");
+      if (!box) return 0;
       const probe = document.createElement("span");
       probe.style.visibility = "hidden";
       box.appendChild(probe);
@@ -109,8 +112,20 @@ export function stageHtml({ canvas, theme = DEFAULT_THEME, title = "", caption =
       box.style.minHeight = Math.ceil(tallest) + "px";
       return Math.ceil(tallest);
     };
+    // A bare stage takes its colours from the screen it shows: a gradient of the page's own
+    // background, darkened towards the edges, so the backdrop changes with the design.
+    window.__backdrop = (color) => {
+      const [r, g, b] = (color.match(/[\\d.]+/g) || [20, 22, 27]).map(Number);
+      const light = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255 > 0.5;
+      const mix = (to, amount) => [r, g, b].map((v, i) => Math.round(v + (to[i] - v) * amount));
+      // Dark screens get a lifted, slightly violet centre so the backdrop reads as colour, not black;
+      // light screens get a soft grey vignette so the phone still has an edge.
+      const center = light ? mix([128, 128, 128], 0.1) : mix([110, 80, 200], 0.24), edge = mix([0, 0, 0], light ? 0.24 : 0.3);
+      document.body.style.background = "radial-gradient(120% 90% at 50% 38%, rgb(" + center + ") 0%, rgb(" + edge + ") 100%)";
+    };
     window.__counter = (count, done) => {
       const box = document.getElementById("counter");
+      if (!box) return;
       if (box.children.length !== count) box.innerHTML = "<i></i>".repeat(count);
       [...box.children].forEach((dot, index) => dot.classList.toggle("done", index < done));
     };

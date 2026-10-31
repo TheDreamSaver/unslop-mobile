@@ -39,7 +39,7 @@ The skill is the folder with `SKILL.md`, `references/` and `scripts/`. It needs 
 **Claude Code**, for all projects:
 
 ```bash
-git clone <this repository> unslop-mobile
+git clone https://github.com/TheDreamSaver/unslop-mobile.git
 mkdir -p ~/.claude/skills/unslop-mobile
 cp -R unslop-mobile/SKILL.md unslop-mobile/references unslop-mobile/scripts unslop-mobile/package.json unslop-mobile/ATTRIBUTION.md unslop-mobile/LICENSE ~/.claude/skills/unslop-mobile/
 ```
@@ -69,7 +69,7 @@ $unslop-mobile check the add-contact form with the keyboard open and larger text
 
 ## The examples
 
-- [examples/checkout-demo](examples/checkout-demo): a vibecoded grocery checkout made for the launch video, in the spirit of the original's vibecoded dashboard. Five mobile problems, each measured on the page and fixed one step at a time: safe areas, touch targets, readable text, a floating button over the total, contrast. Videos: [portrait](examples/checkout-demo/media/checkout-demo-portrait.mp4), [square](examples/checkout-demo/media/checkout-demo-square.mp4), [landscape](examples/checkout-demo/media/checkout-demo-landscape.mp4), 14 seconds each.
+- [examples/checkout-demo](examples/checkout-demo): a vibecoded grocery checkout made for the launch video, in the spirit of the original's vibecoded dashboard. Five mobile problems, each measured on the page and fixed one step at a time: safe areas, touch targets, readable text, a floating button over the total, contrast. Videos: [portrait](examples/checkout-demo/media/checkout-demo-portrait.mp4), [square](examples/checkout-demo/media/checkout-demo-square.mp4), [landscape](examples/checkout-demo/media/checkout-demo-landscape.mp4), and [portrait with only the phone](examples/checkout-demo/media/checkout-demo-portrait-bare.mp4), 14 seconds each.
 - [examples/crosspaths](examples/crosspaths): the worked review below, on a real design study.
 
 ## Run the example
@@ -79,7 +79,7 @@ $unslop-mobile check the add-contact form with the keyboard open and larger text
 ```bash
 cd unslop-mobile
 npm install                 # installs Playwright 1.64.1; uses Google Chrome if present
-npm test                    # 56 tests; browser and video tests skip with a reason if the tools are missing
+npm test                    # 57 tests; browser and video tests skip with a reason if the tools are missing
 npm run example             # captures, then renders both videos into examples/crosspaths/media/
 npm run demo:video          # the checkout demo in portrait, square and landscape
 ```
@@ -111,7 +111,7 @@ A missing piece stops the script with exit code 2 and a message saying what to i
 
 Exercised for this release, on macOS (Darwin 25.5) with Node 24.6, Google Chrome 156, Playwright 1.64.1 and ffmpeg 9.0.2:
 
-- `npm test`: 56 tests covering geometry (aspect ratio, independent viewport and canvas, side layout), dependency errors, captures at the requested viewport and scale, matched before/after sizes and fixtures, measurement of small, covered and inset-bound controls, video dimensions, codec, pixel format and length, every fix in both examples, pixel-identical rendering of the unchanged CrossPaths screens, both stories ending on their after pages, the live redlines reporting real sizes and contrast, colours never jumping back while frames are seeked, documentation links, attribution and a scan for private material.
+- `npm test`: 57 tests covering geometry (aspect ratio, independent viewport and canvas, side layout), dependency errors, captures at the requested viewport and scale, matched before/after sizes and fixtures, measurement of small, covered and inset-bound controls, video dimensions, codec, pixel format and length, every fix in both examples, pixel-identical rendering of the unchanged CrossPaths screens, both stories ending on their after pages, the live redlines reporting real sizes and contrast, colours never jumping back while frames are seeked, documentation links, attribution and a scan for private material.
 - The CrossPaths captures at five phone viewports and two text sizes, and all five videos, inspected frame by frame.
 - Claude Code 2.1.259 discovered the skill from a project-scoped `.claude/skills/unslop-mobile/` folder and matched it by its description.
 - Codex: the skill passes the validator bundled with Codex 0.164 (`skill-creator/scripts/quick_validate.py`), and the install path follows Codex's bundled skill-installer documentation. A live Codex session with the skill installed was not run.

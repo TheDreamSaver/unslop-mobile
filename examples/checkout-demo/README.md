@@ -22,6 +22,7 @@ The gradients, glows and emoji are typical of generated screens, and here each o
 
 ```bash
 npm run demo:video        # portrait, square and landscape cuts into media/
+npm run demo:video:bare   # portrait, only the phone
 node scripts/story.mjs examples/checkout-demo/story.json --play     # watch it live
 ```
 
@@ -36,6 +37,7 @@ Platform behaviour as of October 2026; check again before relying on it.
 - **Portrait (1080 × 1920)** shows the phone at 1.74× its logical size, so 14 px interface text plays at about 8.8 pt on a phone, and it fills a phone held upright. It is the cut that represents the mobile experience best. X stopped cropping vertical video in the timeline in February 2026 and opens it full screen with a tap; LinkedIn shows 9:16 at full height on phones and with side bars on desktop.
 - **Square (1080 × 1080)** suits a LinkedIn audience that reads on desktop: it displays whole everywhere, and the side layout keeps the captions large, but the phone is at 1.04× (about 5.3 pt text) between the zoomed steps.
 - **Landscape (1920 × 1080)** is for slides, a website or a talk, not a phone feed.
+- **Portrait, bare (1080 × 1920)**, `npm run demo:video:bare`: only the phone, as in the original's video, with no caption or label; the backdrop takes its colour from the screen, deep purple behind the draft and warm grey behind the reviewed screen. The phone is at 2× (about 10 pt text). It carries no credit in the frame, so the post must: "adapted from unslop by Damir Sokolovsky (@heydamir), https://github.com/heydamir/unslop".
 
 ## Files
 

@@ -93,7 +93,7 @@ The scripts are optional. The skill works without them, and the video tools need
 - `scripts/compare.mjs` (Playwright and ffmpeg): a before/after video from pairs of screenshots, browser captures or native simulator and device screenshots with their provenance. It refuses pairs whose size, scale, state or fixture differ.
 - `scripts/story.mjs` (Playwright and ffmpeg): the original unslop video, adapted. A browser page lays out at its own phone viewport and tweens from before to after one CSS step at a time, with captions. Only for browser pages whose structure is shared between stages.
 
-The viewport, the capture scale and the video canvas are separate settings. A portrait video shows a page laid out at a phone width; it never squeezes a desktop layout into a tall frame. Details, configuration and native screenshot commands are in [references/evidence.md](references/evidence.md). Every video carries the credit `adapted from unslop by @heydamir`, as the licence asks.
+The viewport, the capture scale and the video canvas are separate settings. A portrait video shows a page laid out at a phone width; it never squeezes a desktop layout into a tall frame. Details, configuration and native screenshot commands are in [references/evidence.md](references/evidence.md). Captioned videos carry the credit `adapted from unslop by @heydamir` in the frame, as the original asks. A `--bare` video shows only the phone, so give that credit, with a link to https://github.com/heydamir/unslop, wherever it is posted.
 
 ## Do not
 

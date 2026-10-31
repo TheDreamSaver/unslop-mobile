@@ -1,0 +1,93 @@
+{
+  "tool": "unslop-mobile compare 0.1.0",
+  "mode": "screenshot-comparison",
+  "createdAt": "2026-10-31T11:14:08.155Z",
+  "comparison": {
+    "file": "../compare.json",
+    "sha256": "ee81db9b5687f5aef06053fa9c2bcb6755ebcdc079f8636eccccd0329d1fa671"
+  },
+  "renderer": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "frame": {
+    "x": 0,
+    "y": 0,
+    "width": 390,
+    "height": 844
+  },
+  "canvas": {
+    "width": 1080,
+    "height": 1920,
+    "preset": "portrait"
+  },
+  "layout": "sequence",
+  "screen": {
+    "width": 682.96,
+    "height": 1478,
+    "scale": 1.7512
+  },
+  "readability": {
+    "bodyPoints": 8.9,
+    "smallPoints": 7.6,
+    "warnings": []
+  },
+  "fps": 30,
+  "frames": 340,
+  "seconds": 11.3,
+  "pairs": [
+    {
+      "caption": "The saved person shows only what was saved",
+      "state": "saved-name-only",
+      "device": "390 × 844 · notch and home indicator",
+      "textScale": 1,
+      "fixture": "438933144ddb685da158cdea87942ccb1df880d4c70e1a950c87ce1fca76d405",
+      "before": {
+        "file": "../captures/before/phone-390-t100/saved-name-only.png",
+        "sha256": "237b4d3539427881e6c405228e9de73cbb59893ae0fe47fb7434e3ca613e5543",
+        "source": "browser-capture · 156.0.8078.79",
+        "size": {
+          "width": 1170,
+          "height": 2532
+        }
+      },
+      "after": {
+        "file": "../captures/after/phone-390-t100/saved-name-only.png",
+        "sha256": "6a328d442016542bcfb4b3880a37024494e9d0cf86db39bc8fcd16d9c8b0bccf",
+        "source": "browser-capture · 156.0.8078.79",
+        "size": {
+          "width": 1170,
+          "height": 2532
+        }
+      }
+    },
+    {
+      "caption": "A typed name survives leaving the form",
+      "state": "draft-reopened",
+      "device": "390 × 844 · notch and home indicator",
+      "textScale": 1,
+      "fixture": "438933144ddb685da158cdea87942ccb1df880d4c70e1a950c87ce1fca76d405",
+      "before": {
+        "file": "../captures/before/phone-390-t100/draft-reopened.png",
+        "sha256": "377e107730ea89050ac56bb6fbabe284e1dfc806e1fe16800dded10043259cf7",
+        "source": "browser-capture · 156.0.8078.79",
+        "size": {
+          "width": 1170,
+          "height": 2532
+        }
+      },
+      "after": {
+        "file": "../captures/after/phone-390-t100/draft-reopened.png",
+        "sha256": "1d2706c78052b064780a8458f65e1c9d5e9eeb60414ee3e04ccb38ec2aa7777c",
+        "source": "browser-capture · 156.0.8078.79",
+        "size": {
+          "width": 1170,
+          "height": 2532
+        }
+      }
+    }
+  ],
+  "label": "Browser captures · HTML design study · fictional data · 390×844 @3x",
+  "credit": "unslop-mobile · adapted from unslop by @heydamir"
+}

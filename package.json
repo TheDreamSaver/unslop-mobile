@@ -3,6 +3,11 @@
   "version": "0.1.0",
   "description": "An agent skill for reviewing and improving mobile interfaces from rendered evidence, with optional capture and before/after video tools. Adapted from unslop by Damir Sokolovsky.",
   "license": "CC-BY-4.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TheDreamSaver/unslop-mobile.git"
+  },
+  "homepage": "https://github.com/TheDreamSaver/unslop-mobile",
   "private": true,
   "type": "module",
   "engines": {
@@ -14,7 +19,8 @@
     "example:compare": "node scripts/compare.mjs examples/crosspaths/compare.json examples/crosspaths/media/crosspaths-compare.mp4",
     "example:story": "node scripts/story.mjs examples/crosspaths/story.json examples/crosspaths/media/crosspaths-story.mp4",
     "example": "npm run example:capture && npm run example:compare && npm run example:story",
-    "demo:video": "node scripts/story.mjs examples/checkout-demo/story.json examples/checkout-demo/media/checkout-demo-portrait.mp4 && node scripts/story.mjs examples/checkout-demo/story.json examples/checkout-demo/media/checkout-demo-square.mp4 --canvas=square && node scripts/story.mjs examples/checkout-demo/story.json examples/checkout-demo/media/checkout-demo-landscape.mp4 --canvas=landscape"
+    "demo:video": "node scripts/story.mjs examples/checkout-demo/story.json examples/checkout-demo/media/checkout-demo-portrait.mp4 && node scripts/story.mjs examples/checkout-demo/story.json examples/checkout-demo/media/checkout-demo-square.mp4 --canvas=square && node scripts/story.mjs examples/checkout-demo/story.json examples/checkout-demo/media/checkout-demo-landscape.mp4 --canvas=landscape",
+    "demo:video:bare": "node scripts/story.mjs examples/checkout-demo/story.json examples/checkout-demo/media/checkout-demo-portrait-bare.mp4 --bare"
   },
   "devDependencies": {
     "playwright": "1.64.1"

@@ -28,7 +28,8 @@ New in this adaptation, with no counterpart in the original: [scripts/capture.mj
 
 - [SKILL.md](SKILL.md) opens with the credit and a link to the original.
 - [scripts/story.mjs](scripts/story.mjs) carries the credit and the changes in its header.
-- Every video rendered by `story.mjs` or `compare.mjs` shows `unslop-mobile · adapted from unslop by @heydamir` in its footer, and records the same credit in its `.json` sidecar.
+- Every captioned video rendered by `story.mjs` or `compare.mjs` shows `unslop-mobile · adapted from unslop by @heydamir` in its footer, and records the same credit in its `.json` sidecar.
+- A video rendered with `story.mjs --bare` shows only the phone, with no text in the frame. Its sidecar records that the credit is not in the frame, and the renderer reminds you to give it, with a link to the original, wherever the video is posted. CC BY 4.0 allows credit in any reasonable manner for the medium; the original asks for it in the video, so prefer a captioned cut where that matters.
 
 If you share or adapt this package, keep this file, the credit in SKILL.md and the video credit, link to both repositories, and note your own changes.
 

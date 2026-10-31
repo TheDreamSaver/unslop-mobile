@@ -27,7 +27,7 @@ import { applySafeArea, normalizeDevice } from "./lib/mobile.mjs";
 import { CREDIT, DEFAULT_THEME, TICK_SOURCE, bands, encode, renderPlan, sideLayout, stageHtml } from "./lib/stage.mjs";
 
 const VERSION = toolVersion();
-const USAGE = "node scripts/story.mjs <story.json | story.html> <out.mp4> [--canvas=portrait|square|landscape|WxH] [--layout=stack|side] [--viewport=390x844] [--frame=x,y,w,h] [--fps=30] [--duration=10] [--frames=folder] [--play]";
+const USAGE = "node scripts/story.mjs <story.json | story.html> <out.mp4> [--canvas=portrait|square|landscape|WxH] [--layout=stack|side] [--bare] [--viewport=390x844] [--frame=x,y,w,h] [--fps=30] [--duration=10] [--frames=folder] [--play]";
 
 // Step names choose an annotation, as in the original: "Spacing" measures gaps, "Details" outlines
 // corners. Mobile additions: "Touch" sizes targets, "Safe area" shows insets.
@@ -116,6 +116,9 @@ export function loadStory(input, overrides = {}) {
     fps: Number(overrides.fps ?? story.fps ?? 30),
     screenRadius: Number(story.screenRadius ?? 40),
     deviceChrome: Boolean(story.deviceChrome),
+    // Bare: only the phone, on a backdrop that follows the page's own colours. No caption, title,
+    // label or credit in the frame, so the credit has to travel with the post instead.
+    bare: Boolean(overrides.bare ?? story.bare),
     // Transition timing in ms, and how long a problem is marked before it changes, in seconds.
     // Defaults follow the original: 700 ms layout, 900 ms colour, a wave of up to 420 ms.
     motion: { layout: 700, tint: 900, wave: 420, read: 0.75, ease: "cubic-bezier(0.45, 0, 0.2, 1)", ...(story.motion ?? {}) },
@@ -125,7 +128,9 @@ export function loadStory(input, overrides = {}) {
 
 export function storyLayout(story) {
   const b = bands(story.canvas);
-  const layout = story.layout === "side" ? sideLayout({ canvas: story.canvas, region: story.frame }) : stageLayout({ canvas: story.canvas, region: story.frame, padding: b.padding, top: b.top, bottom: b.bottom });
+  const layout = story.bare
+    ? stageLayout({ canvas: story.canvas, region: story.frame, padding: Math.round(110 * b.unit), top: 0, bottom: 0 })
+    : story.layout === "side" ? sideLayout({ canvas: story.canvas, region: story.frame }) : stageLayout({ canvas: story.canvas, region: story.frame, padding: b.padding, top: b.top, bottom: b.bottom });
   const [screen] = layout.screens;
   // Rounded corners only where the crop meets the viewport edge, so a crop never looks like a device.
   const fullWidth = story.frame.x === 0 && story.frame.width === story.viewport.width;
@@ -696,7 +701,7 @@ export async function renderStory(story, { out, framesDir, play = false } = {}) 
   const iframeStyle = `position:absolute;left:0;top:0;border:0;width:${story.viewport.width}px;height:${story.viewport.height}px;transform-origin:0 0;transform:scale(${scale}) translate(${-story.frame.x}px, ${-story.frame.y}px);background:#fff;transition:transform 900ms cubic-bezier(0.65, 0, 0.35, 1)`;
   // Annotations are clipped to the screen, with a margin for tags, so a zoom never leaves redlines
   // floating over the captions.
-  const margin = 64 * bands(story.canvas).unit;
+  const margin = (story.bare ? 12 : 64) * bands(story.canvas).unit;
   const clip = `#story-layer { clip-path: inset(${round(screen.y - margin)}px ${round(story.canvas.width - screen.x - screen.width - margin)}px ${round(story.canvas.height - screen.y - screen.height - margin)}px ${round(screen.x - margin)}px); }`;
   const html = stageHtml({
     canvas: story.canvas,
@@ -705,11 +710,19 @@ export async function renderStory(story, { out, framesDir, play = false } = {}) 
     caption: story.intro,
     label: story.label,
     screens: [screen],
-    panel: layout.panel ?? null,
+    panel: story.bare ? null : layout.panel ?? null,
+    bare: story.bare,
     screenHtml: () => `<iframe id="page" title="Story page" src="${sourceSrc(story.source)}" style="${iframeStyle}"></iframe>`,
     extraCss: layerCss(bands(story.canvas).unit) + clip,
     script: `<script>
       window.__tick = ${TICK_SOURCE};
+      window.__followPage = () => {
+        if (!${JSON.stringify(story.bare)}) return;
+        const doc = document.getElementById("page").contentDocument;
+        const pick = (el) => el && getComputedStyle(el).backgroundColor;
+        const color = [pick(doc.body), pick(doc.documentElement)].find((c) => c && !/rgba\\(0, 0, 0, 0\\)|transparent/.test(c)) || "rgb(255, 255, 255)";
+        window.__backdrop(color);
+      };
       // The camera: move the page so a region of the viewport fills the screen, or back to the frame.
       window.__zoom = (region) => {
         const page = document.getElementById("page");
@@ -764,7 +777,7 @@ export async function renderStory(story, { out, framesDir, play = false } = {}) 
     await frame.evaluate(() => window.__story.install());
     await page.waitForTimeout(300);
 
-    await page.evaluate((texts) => window.__fitCaptions(texts), [story.intro, ...story.steps.map((step, index) => `${index + 1} · ${step.caption}`), story.outro]);
+    await page.evaluate((texts) => { window.__fitCaptions(texts); window.__followPage(); }, [story.intro, ...story.steps.map((step, index) => `${index + 1} · ${step.caption}`), story.outro]);
     const slop = await frame.evaluate(() => document.querySelectorAll("[data-slop]").length);
     const call = (name, ...values) => () => frame.evaluate(([name, values]) => window.__story[name](...values), [name, values]);
     const caption = (text) => () => page.evaluate((text) => window.__caption(text), text);
@@ -837,7 +850,7 @@ export async function renderStory(story, { out, framesDir, play = false } = {}) 
       frames = await renderPlan({
         page, plan, total, fps: story.fps, framesDir: folder,
         tick: async (ms) => {
-          await page.evaluate((ms) => window.__tick(ms, [document, document.getElementById("page").contentDocument]), ms);
+          await page.evaluate((ms) => { window.__tick(ms, [document, document.getElementById("page").contentDocument]); window.__followPage(); }, ms);
           await frame.evaluate(() => window.__story.follow());
         },
       });
@@ -873,8 +886,9 @@ export async function renderStory(story, { out, framesDir, play = false } = {}) 
     frames,
     seconds: round(total, 2),
     steps: story.steps.map((step) => ({ name: step.name, caption: step.caption, kind: step.kind, ...(step.zoom !== undefined ? { zoom: step.zoom } : {}) })),
-    label: story.label,
-    credit: CREDIT,
+    label: story.bare ? null : story.label,
+    presentation: story.bare ? "bare: only the phone; no caption, label or credit in the frame" : "captions",
+    credit: story.bare ? `not in the frame; credit "${CREDIT}" with a link to https://github.com/heydamir/unslop wherever the video is posted` : CREDIT,
   };
   return record;
 }
@@ -894,12 +908,13 @@ function browserVersion(executable) {
 
 if (isMain(import.meta.url)) {
   runCli(async () => {
-    const { positionals, values } = parseArgs(process.argv.slice(2), { flags: ["play"], options: ["canvas", "layout", "viewport", "frame", "fps", "duration", "frames"] });
+    const { positionals, values } = parseArgs(process.argv.slice(2), { flags: ["play", "bare"], options: ["canvas", "layout", "viewport", "frame", "fps", "duration", "frames"] });
     const [input, out] = positionals;
     if (!input || (!out && !values.play && !values.frames)) throw new UsageError(USAGE);
     const story = loadStory(input, {
       canvas: values.canvas,
       layout: values.layout,
+      bare: values.bare,
       viewport: values.viewport,
       frame: values.frame,
       fps: number(values.fps, "fps", { min: 1, max: 120 }),
@@ -909,6 +924,7 @@ if (isMain(import.meta.url)) {
     console.log(`viewport ${story.viewport.width}×${story.viewport.height} · frame ${story.frame.x},${story.frame.y},${story.frame.width}×${story.frame.height} · canvas ${story.canvas.width}×${story.canvas.height} (${story.canvasName}, ${story.layout} layout) · screen scale ${layout.scale.toFixed(3)}`);
     console.log(`on a phone: ${layout.readability.body.toFixed(1)} pt for 14 px text, ${layout.readability.small.toFixed(1)} pt for 12 px`);
     layout.readability.warnings.forEach((warning) => console.warn(`warning: ${warning}`));
+    if (story.bare) console.warn(`note: a bare video carries no credit. Credit "${CREDIT}" and link https://github.com/heydamir/unslop in the post (CC BY 4.0).`);
     const record = await renderStory(story, { out, framesDir: values.frames, play: values.play });
     if (!record) return;
     if (out) writeFileSync(`${resolve(out)}.json`, JSON.stringify(record, null, 2) + "\n");
