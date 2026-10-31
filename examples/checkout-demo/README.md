@@ -10,7 +10,7 @@ Every problem is something that goes wrong on an actual phone, and each one is m
 
 | Step | Draft (`app.html?variant=before`) | Reviewed (`app.html`) | Fix |
 | --- | --- | --- | --- |
-| 1 · Safe areas | Title starts at the top edge, under the Dynamic Island and the clock; the checkout button sits on the home indicator | Header below the 59 pt top inset, checkout above the 34 pt bottom inset | [1-safe-areas.css](assets/fixes/1-safe-areas.css) |
+| 1 · Safe areas | A top padding hard-coded to 20 pt, the status bar of phones without a notch, so on a 59 pt Dynamic Island phone the title sits under the clock and the island; the checkout button sits on the home indicator | Header below the 59 pt top inset, checkout above the 34 pt bottom inset | [1-safe-areas.css](assets/fixes/1-safe-areas.css) |
 | 2 · Touch targets | 24 × 24 quantity buttons 2 px apart; removing an item needs a hover-only × | 44 × 44 buttons with room between them; at quantity 1 the minus becomes a remove button | [2-touch.css](assets/fixes/2-touch.css) |
 | 3 · Readable text | 10 px uppercase meta, 10 px slot labels, a product name cut off at "thic…", two money formats | 13–16 px sentence case, names wrap, one money format, one typeface | [3-text.css](assets/fixes/3-text.css) |
 | 4 · Nothing covers the total | A pulsing chat bubble sits on the order total | Chat moves into the header; the list leaves room for the checkout bar | [4-covered.css](assets/fixes/4-covered.css) |

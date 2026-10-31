@@ -76,7 +76,7 @@ export function loadStory(input, overrides = {}) {
     if (kind && !KINDS.includes(kind)) throw new UsageError(`step "${value.name}" has kind "${kind}"; use one of ${KINDS.join(", ")}`);
     // zoom: a region of the viewport the camera moves to for this step, or "full" to move back out.
     const zoom = value.zoom === undefined ? undefined : value.zoom === "full" || value.zoom === null ? null : parseRect(value.zoom, `step "${value.name}" zoom`);
-    return { name: value.name, caption: value.caption ?? value.name, css, highlight, measure: value.measure ?? value.targets ?? [], min: value.min, zoom, kind };
+    return { name: value.name, caption: value.caption ?? value.name, css, highlight, measure: value.measure ?? value.targets ?? [], min: value.min, zoom, kind, motion: value.motion ?? null };
   });
   if (!steps.length) throw new UsageError(`${input} has no steps. Add "steps" to the JSON, or <meta name="unslop-steps" content="Spacing, Color"> to the HTML`);
   const viewport = parseSize(overrides.viewport ?? story.viewport ?? "390x844", "viewport");
@@ -118,7 +118,7 @@ export function loadStory(input, overrides = {}) {
     deviceChrome: Boolean(story.deviceChrome),
     // Transition timing in ms, and how long a problem is marked before it changes, in seconds.
     // Defaults follow the original: 700 ms layout, 900 ms colour, a wave of up to 420 ms.
-    motion: { layout: 700, tint: 900, wave: 420, read: 0.75, ...(story.motion ?? {}) },
+    motion: { layout: 700, tint: 900, wave: 420, read: 0.75, ease: "cubic-bezier(0.45, 0, 0.2, 1)", ...(story.motion ?? {}) },
     theme: { ...DEFAULT_THEME, ...(story.theme ?? {}) },
   };
 }
@@ -133,15 +133,15 @@ export function storyLayout(story) {
   return { ...layout, screen: { ...screen, radius }, readability: readability({ scale: layout.scale, canvas: story.canvas }) };
 }
 
-export const runtime = (steps, minTarget, chrome = false, motion = { layout: 700, tint: 900, wave: 420 }) => `
+export const runtime = (steps, minTarget, chrome = false, motion = { layout: 700, tint: 900, wave: 420, ease: "cubic-bezier(0.45, 0, 0.2, 1)" }) => `
 (() => {
   const red = "#ff4d6a";
   const spring = "cubic-bezier(0.3, 1.12, 0.45, 1)";
-  const ease = "cubic-bezier(0.45, 0, 0.2, 1)";
+  const motion = ${JSON.stringify(motion)};
   const layout = ["padding", "margin", "gap", "row-gap", "column-gap", "width", "height", "min-width", "min-height", "max-width", "max-height", "top", "right", "bottom", "left", "inset", "font-size", "line-height", "letter-spacing", "font-weight", "transform", "translate", "scale", "rotate", "border-width", "outline-width", "flex-basis", "flex-grow", "grid-template-columns", "grid-template-rows"];
   const tint = ["color", "background-color", "border-color", "outline-color", "fill", "stroke", "stroke-dashoffset", "stroke-width", "box-shadow", "text-shadow", "border-radius", "opacity", "filter", "backdrop-filter", "clip-path", "text-decoration-color", "-webkit-text-fill-color"];
-  const timing = (p) => p + (layout.includes(p) ? " ${motion.layout}ms " + spring : " ${motion.tint}ms " + ease) + " var(--wave, 0ms)";
-  const transition = [...layout, ...tint].map(timing).join(", ");
+  const timingWith = (m) => (p) => p + (layout.includes(p) ? " " + m.layout + "ms " + spring : " " + m.tint + "ms " + m.ease) + " var(--wave, 0ms)";
+  const transition = [...layout, ...tint].map(timingWith(motion)).join(", ");
   // Inherited properties transition only where an element's own value changes. When a descendant
   // also transitions a value it merely inherits, every seek of the ancestor's animation starts a
   // fresh transition on the descendant, and the change visibly replays from the old value.
@@ -509,7 +509,7 @@ export const runtime = (steps, minTarget, chrome = false, motion = { layout: 700
       // again from the old value when the parent's ended, and the change would visibly replay.
       document.querySelectorAll("body *").forEach((el) => {
         const b = box(el);
-        const own = Math.round(Math.min(${motion.wave}, (Math.max(0, b.top) / innerHeight * 320 + Math.max(0, b.left) / innerWidth * 100) * ${motion.wave} / 420));
+        const own = Math.round(Math.min(motion.wave, (Math.max(0, b.top) / innerHeight * 320 + Math.max(0, b.left) / innerWidth * 100) * motion.wave / 420));
         const inherited = parseFloat(el.parentElement?.style.getPropertyValue("--wave")) || 0;
         el.style.setProperty("--wave", Math.max(own, inherited) + "ms");
       });
@@ -573,14 +573,35 @@ export const runtime = (steps, minTarget, chrome = false, motion = { layout: 700
       root.offsetHeight;
       root.classList.remove("story-measure");
       root.offsetHeight;
+      // Inherited properties transition only on the elements that draw text or an icon, and never
+      // on an element whose ancestor already does. Ancestors change instantly, so no seeked ancestor
+      // animation can restart a descendant's transition, and each text element keeps its own wave
+      // delay, so a colour change sweeps down the screen instead of flipping all at once.
+      const owned = new Map();
+      const draws = (el) => el.tagName.toLowerCase() === "svg" || [...el.childNodes].some((node) => node.nodeType === 3 && node.textContent.trim());
+      const charTiming = (p) => p + " 700ms " + rise + " calc(var(--wave, 0ms) + 140ms + var(--ci) * 16ms)";
+      const timing = timingWith({ ...motion, ...(steps[k - 1].motion || {}) });
+      const ROLL = ["opacity", "transform", "filter"];
       for (const el of elements) {
         const now = after.get(el), was = before.get(el);
-        const parent = el.parentElement;
-        const follows = parent && after.has(parent) ? INHERITED.filter((p) => now[p] === after.get(parent)[p] && was[p] === before.get(parent)[p]) : [];
+        const above = owned.get(el.parentElement) || new Set();
+        const mine = new Set(above);
+        const follows = [];
+        for (const p of INHERITED) {
+          if (draws(el) && !above.has(p) && now[p] !== was[p]) mine.add(p);
+          else follows.push(p);
+        }
+        owned.set(el, mine);
         for (const [name, longhands] of Object.entries(CURRENT)) {
           if (longhands.every((p) => now[p] === now.color && was[p] === was.color)) follows.push(name);
         }
-        if (follows.length) el.style.setProperty("transition", [...layout, ...tint].filter((p) => !follows.includes(p)).map(timing).join(", "), "important");
+        const props = [...layout, ...tint].filter((p) => !follows.includes(p));
+        if (el.matches(".swap > .to .ch")) {
+          // Letters keep their staggered roll, and change colour with everything else.
+          el.style.setProperty("transition", [...ROLL.map(charTiming), ...props.filter((p) => !ROLL.includes(p)).map(timing)].join(", "), "important");
+        } else {
+          el.style.setProperty("transition", props.map(timing).join(", "), "important");
+        }
       }
       swaps.forEach(({ to }, i) => {
         to.style.setProperty("--to-w", Math.ceil(targets[i].width + 1) + "px");
@@ -590,8 +611,9 @@ export const runtime = (steps, minTarget, chrome = false, motion = { layout: 700
       });
       apply(true);
     },
-    // Letter-by-letter words lose their kerning. Once the swaps have settled, put plain text back so
-    // the last frames show the page exactly as it is.
+    // Letter-by-letter words lose a little kerning. commit() puts plain text back, for checks that
+    // compare a story's end with the real page; the video itself does not call it, because the
+    // spacing visibly snaps when the letters are replaced.
     commit() {
       for (const swap of document.querySelectorAll(".swap")) {
         const at = Number(swap.dataset.at);
@@ -737,7 +759,7 @@ export async function renderStory(story, { out, framesDir, play = false } = {}) 
       await document.fonts.ready;
     });
     if (story.prepare) await frame.addScriptTag({ content: readFileSync(story.prepare, "utf8") });
-    const steps = story.steps.map((step) => ({ name: step.name, css: step.css.map((item) => item.text).join("\n"), highlight: step.highlight, measure: step.measure, min: step.min }));
+    const steps = story.steps.map((step) => ({ name: step.name, css: step.css.map((item) => item.text).join("\n"), highlight: step.highlight, measure: step.measure, min: step.min, motion: step.motion }));
     await frame.addScriptTag({ content: runtime(steps, minTarget, story.deviceChrome, story.motion) });
     await frame.evaluate(() => window.__story.install());
     await page.waitForTimeout(300);
@@ -753,14 +775,15 @@ export async function renderStory(story, { out, framesDir, play = false } = {}) 
     // Each problem is marked before it changes, so a viewer reads it first, and the annotation stays
     // until the change has finished, so the fixed value is seen. Transitions are never compressed;
     // if the story would run past its duration, reading time and holds shrink, to a floor.
-    const settleAfter = (Math.max(story.motion.layout, story.motion.tint) + story.motion.wave) / 1000 + 0.05;
+    // When a step's change has finished: its own colour and layout timing, plus the wave.
+    const settleOf = (step) => { const m = { ...story.motion, ...(step.motion || {}) }; return (Math.max(m.layout, m.tint) + m.wave) / 1000 + 0.05; };
     let zoomedState = null;
     const movesPlan = story.steps.map((step) => {
       const moving = step.zoom !== undefined && JSON.stringify(step.zoom) !== JSON.stringify(zoomedState);
       if (step.zoom !== undefined) zoomedState = step.zoom;
       return moving;
     });
-    const fixedTime = story.steps.reduce((sum, step, index) => sum + (movesPlan[index] ? 0.35 : 0) + (step.kind ? 0.05 + settleAfter : 0.25 + settleAfter), 0) + (zoomedState ? 0.35 : 0);
+    const fixedTime = story.steps.reduce((sum, step, index) => sum + (movesPlan[index] ? 0.35 : 0) + (step.kind ? 0.05 : 0.25) + settleOf(step), 0) + (zoomedState ? 0.35 : 0);
     const flexible = 1.4 + 1.8 + story.steps.reduce((sum, step) => sum + (step.kind ? story.motion.read + 0.3 : 0.2), 0);
     const squeeze = Math.max(0.6, Math.min(1, (story.duration - fixedTime) / flexible));
     const introHold = 1.4 * squeeze;
@@ -785,14 +808,14 @@ export async function renderStory(story, { out, framesDir, play = false } = {}) 
         const change = cursor + 0.05 + story.motion.read * squeeze;
         at(change, call("step", k));
         at(change, counter(k));
-        at(change + settleAfter, call("settle"));
-        cursor = change + settleAfter + 0.3 * squeeze;
+        at(change + settleOf(step), call("settle"));
+        cursor = change + settleOf(step) + 0.3 * squeeze;
         at(cursor, call("clear"));
       } else {
         const change = cursor + 0.2 * squeeze;
         at(change, call("step", k));
         at(change, counter(k));
-        cursor = change + settleAfter;
+        cursor = change + settleOf(step);
       }
     });
     if (zoomedState) {
@@ -800,7 +823,6 @@ export async function renderStory(story, { out, framesDir, play = false } = {}) 
       cursor += 0.35;
     }
     at(cursor, caption(story.outro));
-    at(cursor + 0.05, call("commit"));
     total = cursor + outroHold;
 
     if (play) {

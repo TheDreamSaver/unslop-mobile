@@ -1,13 +1,16 @@
 /* Marlow Market checkout, as a vibecoded first draft ("before"). Every choice here is typical of a
    screen generated without looking at a phone, and each one is a real problem on one:
-   content under the Dynamic Island and home indicator, 24 px buttons, 10 px uppercase labels,
+   a top padding hard-coded for phones without a notch, so content sits under the Dynamic Island,
+   a checkout button on the home indicator, 24 px buttons, 10 px uppercase labels,
    truncated product names, a remove action that only exists on hover, selection shown by colour
    alone, a floating chat button over the total, and white text on a light gradient at 2.6:1.
    The fixes in fixes/ are applied on top, one per story step. */
 
 @font-face { font-family: "Hanken Grotesk"; src: url("fonts/HankenGrotesk-Variable.ttf"); font-weight: 100 900; font-display: block; }
 
-:root { --inset-top: 0px; }
+/* A hard-coded 20 pt top padding: the status bar of an iPhone without a notch. On a phone with a
+   Dynamic Island the real inset is 59 pt, so the title still lands under the clock and the island. */
+:root { --inset-top: 20px; }
 * { box-sizing: border-box; }
 html, body { height: 100%; }
 body { margin: 0; overflow: hidden; background-color: #150A36; color: #ECE7FF; font: 13px/1.35 -apple-system, BlinkMacSystemFont, system-ui, sans-serif; -webkit-text-size-adjust: 100%; -webkit-font-smoothing: antialiased; }

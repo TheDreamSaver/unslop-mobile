@@ -1,5 +1,6 @@
-/* Fix 1 · Clear the Dynamic Island and the home indicator. The header starts below the top inset
-   and the checkout button sits above the bottom one. env() is 0 where a device has no insets. */
+/* Fix 1 · Clear the Dynamic Island and the home indicator. The header uses the device's real top
+   inset instead of a hard-coded 20 pt, and the checkout button sits above the bottom one. env() is 0
+   where a device has no insets. */
 
 :root { --inset-top: env(safe-area-inset-top, 0px); }
 .checkout { padding-bottom: max(12px, calc(env(safe-area-inset-bottom, 0px) + 8px)); }

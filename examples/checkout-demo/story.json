@@ -81,7 +81,11 @@
         ".promo-text",
         ".slot[aria-checked='true'] .slot-label"
       ],
-      "zoom": "full"
+      "zoom": "full",
+      "motion": {
+        "tint": 1400,
+        "ease": "cubic-bezier(0.37, 0, 0.63, 1)"
+      }
     }
   ],
   "motion": {
