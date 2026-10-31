@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { loadStory, renderStory, storyLayout } from "../scripts/story.mjs";
+import { loadStory, renderStory, runtime, storyLayout } from "../scripts/story.mjs";
 import { checkPair, loadComparison, renderComparison } from "../scripts/compare.mjs";
 import { EvidenceError } from "../scripts/lib/errors.mjs";
 import { EXAMPLE, browserSkip, ffmpegSkip, jpegSize, probe, tempDir, writePng } from "./helpers.mjs";
@@ -54,6 +54,42 @@ test("zoom regions are parsed per step and must lie inside the viewport", () => 
   assert.throws(() => loadStory(join(dir, "bad.json")), /outside/);
   writeFileSync(join(dir, "kind.json"), JSON.stringify({ source: "page.html", steps: [{ name: "A", kind: "sparkles" }] }));
   assert.throws(() => loadStory(join(dir, "kind.json")), /use one of/);
+});
+
+test("how long the original and the result are held is read from the story and checked", () => {
+  const dir = tempDir();
+  writeFileSync(join(dir, "page.html"), "<meta name=viewport content='width=device-width'><p>hi</p>");
+  writeFileSync(join(dir, "story.json"), JSON.stringify({ source: "page.html", hold: { intro: 2, outro: 3.5 }, steps: ["A"] }));
+  assert.deepEqual(loadStory(join(dir, "story.json")).hold, { intro: 2, outro: 3.5 });
+  writeFileSync(join(dir, "plain.json"), JSON.stringify({ source: "page.html", steps: ["A"] }));
+  assert.deepEqual(loadStory(join(dir, "plain.json")).hold, { intro: 1.4, outro: 1.8 }, "the original's holds by default");
+  writeFileSync(join(dir, "bad.json"), JSON.stringify({ source: "page.html", hold: { end: 2 }, steps: ["A"] }));
+  assert.throws(() => loadStory(join(dir, "bad.json")), /hold takes "intro" and "outro"/);
+});
+
+test("the drawn status bar and home indicator take black or white ink from the screen behind them", { skip: await browserSkip() }, async () => {
+  const { launchBrowser } = await import("../scripts/lib/deps.mjs");
+  const { mobileContext, normalizeDevice } = await import("../scripts/lib/mobile.mjs");
+  const { browser } = await launchBrowser();
+  try {
+    const { page } = await mobileContext(browser, normalizeDevice({ viewport: "390x844", scale: 1, safeArea: { top: 47, bottom: 34 } }));
+    // A gold header over a dark tab bar: white blended over gold would come out blue.
+    await page.setContent(`<meta name="viewport" content="width=device-width"><body style="margin:0;height:100vh;background:#F4CE52"><nav style="position:fixed;left:0;right:0;bottom:0;height:90px;background:#0D0F14"></nav></body>`);
+    await page.addScriptTag({ content: runtime([], 44, true) });
+    await page.evaluate(() => window.__story.install());
+    const ink = () => page.evaluate(() => Object.fromEntries([...document.querySelectorAll("#story-device [data-ink]")].map((el) => [el.dataset.ink, getComputedStyle(el).color])));
+    assert.deepEqual(await ink(), { top: "rgb(0, 0, 0)", bottom: "rgb(255, 255, 255)" });
+    // Followed every frame: swap the colours (at once, without the story's transitions) and the ink follows.
+    await page.evaluate(() => {
+      document.documentElement.classList.add("story-measure");
+      document.body.style.background = "#0D0F14";
+      document.querySelector("nav").style.background = "#FFFEFA";
+      window.__story.follow();
+    });
+    assert.deepEqual(await ink(), { top: "rgb(255, 255, 255)", bottom: "rgb(0, 0, 0)" });
+  } finally {
+    await browser.close();
+  }
 });
 
 test("story frames are canvas-sized whatever the viewport, and the page really lays out at the phone width", { skip: await browserSkip() }, async () => {

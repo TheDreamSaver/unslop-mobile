@@ -1,0 +1,136 @@
+{
+  "tool": "unslop-mobile story 0.1.0",
+  "mode": "css-morph",
+  "note": "Rendered from a browser page by tweening CSS between steps. Not a native screen recording.",
+  "createdAt": "2026-10-31T17:14:10.804Z",
+  "story": {
+    "file": "../story.json",
+    "sha256": "b4354ba5adaa1e96edc7cd46877d31e0cac67075947582b796341bf5ec42b2c0"
+  },
+  "source": {
+    "file": "../app.html",
+    "query": "",
+    "sha256": "8493451769ebd8b32d58cde31e64a2418b21e62616f2d452a0fd2666c65d4e5c"
+  },
+  "prepare": {
+    "file": "../story/prepare.js",
+    "sha256": "4ce2e3e174e200f23b1e487e042c15c415bffd197455a01d048554db7cfeca17"
+  },
+  "stepStyles": [
+    {
+      "step": "Count and switch",
+      "file": "assets/steps/1-controls.css",
+      "sha256": "25c08e524b4ed68dcd72d8d2ab52b591de0ecd6a959d23a9367f68a87b638047"
+    },
+    {
+      "step": "Header",
+      "file": "assets/steps/2-header.css",
+      "sha256": "0a0d72428458fcb381856d18bc083178a33e8294f074955737f3f264c2b4a595"
+    },
+    {
+      "step": "Card heads",
+      "file": "assets/steps/3-card-heads.css",
+      "sha256": "d259e549adb3a73481da98c960de8fe643d219e4d09388fe7e7eb8b7afdec659"
+    },
+    {
+      "step": "Card body",
+      "file": "assets/steps/4-card-body.css",
+      "sha256": "68996e664541c1e5e6414e5adaaba4a43fd2e3ac5c65bd0af725d7a3eb9c9807"
+    },
+    {
+      "step": "Palette",
+      "file": "assets/steps/5-palette.css",
+      "sha256": "3379b27f0738fbb48c5e7669a84eb11845da041f699cb2ab287e6f75d030d891"
+    },
+    {
+      "step": "Landmarks",
+      "file": "assets/steps/6-landmarks.css",
+      "sha256": "333f52ec46fa792103c2cc99f5b8dd03e168192495dc1c9da78244d5530e2800"
+    },
+    {
+      "step": "Tab bar",
+      "file": "assets/steps/7-navigation.css",
+      "sha256": "0332a26f0554f834af0bff5ff81e5880526224508ce0e41a43a2f61e9e5949a2"
+    }
+  ],
+  "browser": {
+    "version": "Google Chrome 156.0.8078.79"
+  },
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "safeArea": {
+    "top": 47,
+    "right": 0,
+    "bottom": 34,
+    "left": 0
+  },
+  "frame": {
+    "x": 0,
+    "y": 0,
+    "width": 390,
+    "height": 844
+  },
+  "canvas": {
+    "width": 1080,
+    "height": 1920,
+    "preset": "portrait",
+    "layout": "stack"
+  },
+  "screen": {
+    "x": 147.23,
+    "y": 110,
+    "width": 785.55,
+    "height": 1700,
+    "scale": 2.0142
+  },
+  "readability": {
+    "bodyPoints": 10.2,
+    "smallPoints": 8.7,
+    "warnings": []
+  },
+  "fps": 30,
+  "frames": 509,
+  "seconds": 16.93,
+  "steps": [
+    {
+      "name": "Count and switch",
+      "caption": "One count, one People / Places switch",
+      "kind": null
+    },
+    {
+      "name": "Header",
+      "caption": "The header becomes a panel; the mark loses its tile",
+      "kind": null
+    },
+    {
+      "name": "Card heads",
+      "caption": "Names, initials and a month stamp",
+      "kind": null
+    },
+    {
+      "name": "Card body",
+      "caption": "Where you met, the memory, then the other two places",
+      "kind": null
+    },
+    {
+      "name": "Palette",
+      "caption": "Cocoa & Rust Passage",
+      "kind": null
+    },
+    {
+      "name": "Landmarks",
+      "caption": "The place you met, faint behind the card",
+      "kind": null
+    },
+    {
+      "name": "Tab bar",
+      "caption": "People · Map · + · Journey · You",
+      "kind": null
+    }
+  ],
+  "label": null,
+  "presentation": "bare: only the phone; no caption, label or credit in the frame",
+  "credit": "not in the frame; credit \"unslop-mobile · adapted from unslop by @heydamir\" with a link to https://github.com/heydamir/unslop wherever the video is posted"
+}

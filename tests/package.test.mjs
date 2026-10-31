@@ -8,10 +8,13 @@ import { dirname, extname, join, relative } from "node:path";
 import { ROOT } from "./helpers.mjs";
 
 const IGNORED = new Set(["node_modules", ".git", "captures", ".playwright-mcp"]);
+// Claude Code's per-user permissions for a checkout: local, and kept out of git.
+const LOCAL = new Set([join(".claude", "settings.local.json")]);
 function files(dir = ROOT) {
   return readdirSync(dir).flatMap((name) => {
     if (IGNORED.has(name) || name.endsWith(".frames")) return [];
     const path = join(dir, name);
+    if (LOCAL.has(relative(ROOT, path))) return [];
     return statSync(path).isDirectory() ? files(path) : [path];
   });
 }

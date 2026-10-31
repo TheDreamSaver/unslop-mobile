@@ -1,0 +1,26 @@
+{
+  "title": "CrossPaths · People, redesigned in place",
+  "label": "Authored HTML animation of an Expo redesign · fictional data · 390×844",
+  "source": "app.html",
+  "prepare": "story/prepare.js",
+  "viewport": "390x844",
+  "safeArea": { "top": 47, "bottom": 34 },
+  "deviceChrome": true,
+  "screenRadius": 47,
+  "bare": true,
+  "intro": "The original People screen",
+  "outro": "The redesigned People screen",
+  "duration": 22,
+  "fps": 30,
+  "hold": { "intro": 1.6, "outro": 1.8 },
+  "motion": { "layout": 1100, "tint": 900, "wave": 420 },
+  "steps": [
+    { "name": "Count and switch", "caption": "One count, one People / Places switch", "css": "assets/steps/1-controls.css", "motion": { "tint": 500 } },
+    { "name": "Header", "caption": "The header becomes a panel; the mark loses its tile", "css": "assets/steps/2-header.css", "motion": { "tint": 500 } },
+    { "name": "Card heads", "caption": "Names, initials and a month stamp", "css": "assets/steps/3-card-heads.css" },
+    { "name": "Card body", "caption": "Where you met, the memory, then the other two places", "css": "assets/steps/4-card-body.css", "motion": { "layout": 950, "tint": 500, "wave": 1100 } },
+    { "name": "Palette", "caption": "Cocoa & Rust Passage", "css": "assets/steps/5-palette.css", "motion": { "tint": 1200, "wave": 750, "ease": "cubic-bezier(0.37, 0, 0.63, 1)" } },
+    { "name": "Landmarks", "caption": "The place you met, faint behind the card", "css": "assets/steps/6-landmarks.css", "motion": { "tint": 1200, "wave": 500 } },
+    { "name": "Tab bar", "caption": "People · Map · + · Journey · You", "css": "assets/steps/7-navigation.css" }
+  ]
+}

@@ -95,6 +95,11 @@ export function loadStory(input, overrides = {}) {
   // swaps, data-in and data-out on a clean page, so the page itself carries no story code.
   const prepare = story.prepare ? resolve(root, story.prepare) : null;
   if (prepare && !existsSync(prepare)) throw new UsageError(`story prepare script not found: ${story.prepare}`);
+  // How long the original is shown before the first step and the result after the last, in seconds.
+  const hold = { intro: 1.4, outro: 1.8, ...(story.hold ?? {}) };
+  for (const [key, value] of Object.entries(hold)) {
+    if (!["intro", "outro"].includes(key) || typeof value !== "number" || !(value >= 0)) throw new UsageError(`hold takes "intro" and "outro" in seconds, got ${JSON.stringify(story.hold)}`);
+  }
   return {
     file,
     root,
@@ -122,6 +127,7 @@ export function loadStory(input, overrides = {}) {
     // Transition timing in ms, and how long a problem is marked before it changes, in seconds.
     // Defaults follow the original: 700 ms layout, 900 ms colour, a wave of up to 420 ms.
     motion: { layout: 700, tint: 900, wave: 420, read: 0.75, ease: "cubic-bezier(0.45, 0, 0.2, 1)", ...(story.motion ?? {}) },
+    hold,
     theme: { ...DEFAULT_THEME, ...(story.theme ?? {}) },
   };
 }
@@ -475,15 +481,38 @@ export const runtime = (steps, minTarget, chrome = false, motion = { layout: 700
     layer.style.cssText = "position:fixed;inset:0;pointer-events:none;z-index:2147483647;transition:none!important";
     if (top >= 50) layer.innerHTML += '<i style="position:absolute;left:50%;top:11px;width:125px;height:37px;margin-left:-62.5px;border-radius:19px;background:#000;transition:none!important"></i>';
     else if (top >= 40) layer.innerHTML += '<i style="position:absolute;left:50%;top:0;width:160px;height:31px;margin-left:-80px;border-radius:0 0 20px 20px;background:#000;transition:none!important"></i>';
-    if (bottom) layer.innerHTML += '<i style="position:absolute;left:50%;bottom:8px;width:134px;height:5px;margin-left:-67px;border-radius:3px;background:#fff;mix-blend-mode:difference;transition:none!important"></i>';
+    if (bottom) layer.innerHTML += '<i data-ink="bottom" style="position:absolute;left:50%;bottom:8px;width:134px;height:5px;margin-left:-67px;border-radius:3px;background:currentColor;color:#fff;transition:none!important"></i>';
     // A status bar in the top inset: the time and battery, drawn the way the system would.
     if (top >= 40) {
       const ear = (innerWidth - (top >= 50 ? 125 : 160)) / 2;
       const middle = top >= 50 ? 29.5 : 15.5;
-      layer.innerHTML += '<span style="position:absolute;left:0;width:' + ear + 'px;top:' + (middle - 11) + 'px;text-align:center;font:600 17px/22px -apple-system,system-ui,sans-serif;color:#fff;mix-blend-mode:difference;transition:none!important">9:41</span>' +
-        '<i style="position:absolute;left:' + (innerWidth - ear / 2 - 13) + 'px;top:' + (middle - 6) + 'px;width:24px;height:12px;border:1.5px solid #fff;border-radius:4px;box-sizing:border-box;mix-blend-mode:difference;transition:none!important"><i style="position:absolute;inset:1.5px 5px 1.5px 1.5px;border-radius:1.5px;background:#fff;transition:none!important"></i></i>';
+      layer.innerHTML += '<span data-ink="top" style="position:absolute;left:0;width:' + ear + 'px;top:' + (middle - 11) + 'px;text-align:center;font:600 17px/22px -apple-system,system-ui,sans-serif;color:#fff;transition:none!important">9:41</span>' +
+        '<i data-ink="top" style="position:absolute;left:' + (innerWidth - ear / 2 - 13) + 'px;top:' + (middle - 6) + 'px;width:24px;height:12px;border:1.5px solid currentColor;border-radius:4px;box-sizing:border-box;color:#fff;transition:none!important"><i style="position:absolute;inset:1.5px 5px 1.5px 1.5px;border-radius:1.5px;background:currentColor;transition:none!important"></i></i>';
     }
     document.body.appendChild(layer);
+    statusInk();
+  }
+
+  // The status bar and home indicator take their ink from the screen behind them, white on dark
+  // and black on light, as the system's do. (A blend cannot: the device layer is its own stacking
+  // context, so a blended mark only ever meets the layer's transparent backdrop and stays white.)
+  // Read every frame, because the screen's colours change during a story.
+  function statusInk() {
+    for (const place of ["top", "bottom"]) {
+      const parts = document.querySelectorAll('#story-device [data-ink="' + place + '"]');
+      if (!parts.length) continue;
+      const mark = parts[0].getBoundingClientRect();
+      let el = document.elementFromPoint(mark.left + mark.width / 2, mark.top + mark.height / 2);
+      let rgba = null;
+      for (; el; el = el.parentElement) {
+        const c = getComputedStyle(el).backgroundColor.match(/[\\d.]+/g).map(Number);
+        if ((c[3] ?? 1) >= 0.5) { rgba = c; break; }
+      }
+      const [r, g, b] = (rgba ?? [255, 255, 255]).map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; });
+      const light = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+      const ink = Math.round(255 * (1 - Math.min(1, Math.max(0, (light - 0.2) / 0.25))));
+      parts.forEach((part) => { part.style.color = "rgb(" + ink + ", " + ink + ", " + ink + ")"; });
+    }
   }
 
   const kinds = { audit, spacing, details, notes, targets, sizes, contrast, insets };
@@ -525,6 +554,7 @@ export const runtime = (steps, minTarget, chrome = false, motion = { layout: 700
       document.documentElement.classList.add("story-live");
       const loop = () => {
         if (current && !stepping) current();
+        if (!stepping) statusInk();
         requestAnimationFrame(loop);
       };
       requestAnimationFrame(loop);
@@ -542,6 +572,7 @@ export const runtime = (steps, minTarget, chrome = false, motion = { layout: 700
     follow() {
       stepping = true;
       if (current) current();
+      statusInk();
     },
     step(k) {
       const root = document.documentElement;
@@ -797,10 +828,10 @@ export async function renderStory(story, { out, framesDir, play = false } = {}) 
       return moving;
     });
     const fixedTime = story.steps.reduce((sum, step, index) => sum + (movesPlan[index] ? 0.35 : 0) + (step.kind ? 0.05 : 0.25) + settleOf(step), 0) + (zoomedState ? 0.35 : 0);
-    const flexible = 1.4 + 1.8 + story.steps.reduce((sum, step) => sum + (step.kind ? story.motion.read + 0.3 : 0.2), 0);
+    const flexible = story.hold.intro + story.hold.outro + story.steps.reduce((sum, step) => sum + (step.kind ? story.motion.read + 0.3 : 0.2), 0);
     const squeeze = Math.max(0.6, Math.min(1, (story.duration - fixedTime) / flexible));
-    const introHold = 1.4 * squeeze;
-    const outroHold = 1.8 * squeeze;
+    const introHold = story.hold.intro * squeeze;
+    const outroHold = story.hold.outro * squeeze;
     at(0, counter(0));
     let cursor = introHold;
     if (slop) {

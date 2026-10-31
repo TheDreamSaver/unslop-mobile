@@ -1,0 +1,66 @@
+/* Beat 5 · Cocoa & Rust Passage. The dark screen turns to paper and the header to gold: Cocoa
+   #563525 on the mark, Cross and QR button, Rust #963E1B on Paths, ink #24364B on text.
+
+   The redesign also changes typeface, DM Sans to Hanken Grotesk, and the memory from grey italic to
+   upright ink. A typeface cannot tween, so each line switches face at the moment its colour passes
+   through the colour behind it, where the switch cannot be seen. --flip is that moment, after the
+   line's own wave, in this step's 1200 ms colour change.
+
+   The change sweeps down the screen a region at a time. Each region and everything in it share one
+   wave, so a line and the surface behind it change together and --flip lands where they meet. The
+   tab bar's wave applies only to this step. */
+html.s5 .hero, html.s5 .hero * { --wave: 0ms !important; }
+html.s5 .tabs, html.s5 .tabs * { --wave: 160ms !important; }
+html.s5 .card:nth-child(1), html.s5 .card:nth-child(1) * { --wave: 300ms !important; }
+html.s5 .card:nth-child(2), html.s5 .card:nth-child(2) * { --wave: 460ms !important; }
+html.s5 .card:nth-child(3), html.s5 .card:nth-child(3) * { --wave: 600ms !important; }
+html.s5:not(.s7) .tabbar, html.s5:not(.s7) .tabbar * { --wave: 680ms !important; }
+
+body { background-color: #F3EFE6; }
+.hero { background-color: #F4CE52; }
+.wordmark .cross { color: #563525; }
+.wordmark .paths { color: #963E1B; }
+.logo .mark { color: #563525; }
+.head-btn { background-color: #563525; }
+.head-btn .ico { color: #F4CE52; }
+.pill { color: #563525; }
+.search { border-color: #65531E; background-color: #FFFEFA; }
+.search-ico .ico, .placeholder { color: #53616A; }
+.tabs { background-color: #EAE4D8; }
+.tab-item.active { background-color: #FFFEFA; }
+.tab-item .t, .tab-item.active .t { color: #24364B; }
+
+.card { border-color: #DDD8CD; background-color: #FFFEFA; box-shadow: 0 3px 10px rgba(40, 39, 30, 0.035); }
+.avatar { background-color: var(--tone); }
+.ini { color: #513E45; }
+.name { color: #24364B; }
+.handle { color: #53616A; }
+.date { background-color: #F8F1D9; }
+.date > span { color: #65531E; }
+.loc-ico .ico, .loc-ico[data-loc="met"] .ico, .loc-label { color: #53616A; }
+.loc-value, .note { color: #24364B; }
+.rule { background-color: #DDD8CD; }
+
+.tabbar { border-top-color: #DDD8CD; background-color: #FFFEFA; }
+.tab-ico .ico, .tab-label { color: #53616A; }
+
+@keyframes face-400 { to { font-family: HankenGrotesk_400; } }
+@keyframes face-600 { to { font-family: HankenGrotesk_600; } }
+@keyframes face-700 { to { font-family: HankenGrotesk_700; } }
+@keyframes face-note { to { width: 314px; font-family: HankenGrotesk_400; font-style: normal; font-size: 14px; line-height: 21px; } }
+.handle, .date .y, .loc-label[data-loc="met"], .loc-value, .tab:not(.active) > .tab-label:not([data-copy]) { animation: face-400 1ms steps(1, start) calc(var(--wave, 0ms) + var(--flip)) both; }
+.loc-value[data-loc="met"] { animation-name: face-600; }
+.date .m, .tab.active > .tab-label { animation: face-700 1ms steps(1, start) calc(var(--wave, 0ms) + var(--flip)) both; }
+.note { animation: face-note 1ms steps(1, start) calc(var(--wave, 0ms) + var(--flip)) both; }
+/* The footer places keep step 4's finished step-aside, listed first so it is not restarted. */
+.card > .loc-value[data-loc="home"], .card > .loc-value[data-loc="now"] { animation: step-aside 1500ms linear var(--lag, 0ms) both, face-400 1ms steps(1, start) calc(var(--wave, 0ms) + var(--flip)) both; }
+
+/* When each pair of colours meets, measured by ticking through this step: a line and its surface
+   share a wave, so these hold for every card. The stamp lightens ahead of the card, so its date
+   meets it early. */
+.handle, .loc-label { --flip: 578ms; }
+.loc-value { --flip: 615ms; }
+.note { --flip: 450ms; }
+.date > span { --flip: 426ms; }
+.tab-label { --flip: 592ms; }
+.tab.active > .tab-label { --flip: 652ms; }

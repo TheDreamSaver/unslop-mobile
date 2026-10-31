@@ -1,0 +1,13 @@
+/* Beat 3 · Each person's card opens up: a larger name, a rounded-square avatar with initials, and
+   the meeting month as a small stamp instead of a line of grey text. */
+
+.card { margin-bottom: 16px; border-radius: 21px; }
+.avatar { left: 17px; top: 17px; border-radius: 15px; }
+.name { top: 17px; font-size: 21px; line-height: 26px; }
+.handle { top: 46px; font-size: 12px; line-height: 18px; }
+/* The stamp's width and centring are measured per card in the redesigned type (app.js). */
+.date { right: 17px; top: 17px; width: var(--stamp-w); height: 45px; background-color: rgba(248, 241, 217, 0.1); }
+.date .m { left: var(--stamp-month-x); top: 6px; font-size: 12px; line-height: 17px; }
+.date .y { top: 23px; font-size: 11px; line-height: 16px; }
+.date .yx { left: 0; --wave: calc(var(--yw) + 260ms) !important; }
+.ini { font-family: HankenGrotesk_700; font-size: 14.96px; line-height: 23px; }

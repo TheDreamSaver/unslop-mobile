@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>CrossPaths · People · motion source</title>
+<link rel="stylesheet" href="assets/app.css">
+</head>
+<!-- A video-only reconstruction of the CrossPaths People screen. It starts as the original Expo
+     screen and the step stylesheets in assets/steps/ turn it into the redesigned one. It is not the
+     app, and the app does not animate this way. See README.md. -->
+<body>
+<div class="app">
+  <div class="screen">
+    <header class="hero">
+      <div class="brand-row">
+        <div class="brand">
+          <span class="logo">
+            <span class="tile"></span>
+            <span class="mark-box">
+              <svg class="mark" viewBox="96 78 596 590" aria-hidden="true">
+                <g fill="currentColor">
+                  <path d="M198 142 238 102 394 258 551 102 591 142 578 187 551 162 394 318 238 162 211 187Z"/>
+                  <path d="M198 603 211 560 238 585 394 428 551 585 578 560 591 603 551 643 394 488 238 643Z"/>
+                  <path d="M122 218 159 180 203 195 181 218 337 373 181 530 203 551 159 565 122 528 278 373Z"/>
+                  <path d="M665 218 628 180 585 195 607 218 451 373 607 530 585 551 628 565 665 528 511 373Z"/>
+                  <path fill-rule="evenodd" d="M194 178 133 160A35 35 0 1 1 177 115ZM158 126A14 14 0 1 0 130 126 14 14 0 1 0 158 126Z"/>
+                  <path fill-rule="evenodd" transform="translate(788 0) scale(-1 1)" d="M194 178 133 160A35 35 0 1 1 177 115ZM158 126A14 14 0 1 0 130 126 14 14 0 1 0 158 126Z"/>
+                  <path fill-rule="evenodd" transform="translate(0 746) scale(1 -1)" d="M194 178 133 160A35 35 0 1 1 177 115ZM158 126A14 14 0 1 0 130 126 14 14 0 1 0 158 126Z"/>
+                  <path fill-rule="evenodd" transform="translate(788 746) scale(-1 -1)" d="M194 178 133 160A35 35 0 1 1 177 115ZM158 126A14 14 0 1 0 130 126 14 14 0 1 0 158 126Z"/>
+                </g>
+                <path d="m239 524 311-303" fill="none" stroke="currentColor" stroke-width="10" stroke-linecap="round"/>
+              </svg>
+            </span>
+          </span>
+          <span class="wordmark"><span class="cross">Cross</span><span class="paths">Paths</span></span>
+        </div>
+        <span class="head-btn"><i class="ico globe">&#xf2c2;</i><i class="ico qr">&#xf4fd;</i></span>
+      </div>
+      <div class="pills">
+        <span class="pill" id="pill-people"><span class="num coral" id="count-people"></span><span class="lbl">People</span></span>
+        <span class="pill" id="pill-from"><span class="lbl">From</span><span class="num teal" id="count-homebases"></span><span class="lbl">Countries</span></span>
+        <span class="pill" id="pill-visitable"><span class="num sea" id="count-visitable"></span><span class="lbl">Visitable</span><i class="ico chev">&#xf23b;</i></span>
+      </div>
+      <div class="search">
+        <span class="search-ico"><i class="ico a">&#xf55f;</i><i class="ico b">&#xf563;</i></span>
+        <span class="placeholder" data-copy="search"></span>
+      </div>
+    </header>
+    <main class="list">
+      <div class="tabs">
+        <span class="tab-item active"><span class="t" data-copy="tab-people"></span></span>
+        <span class="tab-item"><span class="t" data-copy="tab-places"></span></span>
+        <span class="tab-item" id="tab-homebases"><span class="t">Homebases</span></span>
+      </div>
+      <div id="cards"></div>
+    </main>
+  </div>
+  <nav class="tabbar">
+    <span class="tab active"><span class="tab-ico"><i class="ico a">&#xf49f;</i><i class="ico b">&#xf4a3;</i></span><span class="tab-label">People</span></span>
+    <span class="tab"><span class="tab-ico"><i class="ico a">&#xf443;</i></span><span class="tab-label">Map</span></span>
+    <span class="tab fab-slot"><span class="fab"><i class="ico">&#xf103;</i></span></span>
+    <span class="tab"><span class="tab-ico"><i class="ico a">&#xf5de;</i><i class="ico b">&#xf1d6;</i></span><span class="tab-label" data-copy="nav-journey"></span></span>
+    <span class="tab"><span class="tab-ico"><i class="ico a">&#xf4aa;</i><i class="ico b">&#xf4ac;</i></span><span class="tab-label" data-copy="nav-you"></span></span>
+  </nav>
+</div>
+<script src="assets/people.js"></script>
+<script src="assets/landmarks.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,142 @@
+/* The original CrossPaths People screen, rebuilt from the Expo source (app/(tabs)/index.tsx,
+   src/components/ContactCard.tsx, app/(tabs)/_layout.tsx at CrossPaths 257147d) and from the
+   element boxes of its browser export at 390 × 844. Font names are the app's own; each weight is
+   its own family, as in React Native. Line heights are the fonts' normal heights written in px, so
+   they can tween. Card contents are positioned from the measured boxes, because the redesign
+   reorders them and a reordered flow cannot tween. The step sheets in steps/ change this page into
+   the redesigned screen; the colours and sizes they end on are the redesign's. */
+
+@font-face { font-family: DMSans_400Regular; src: url("fonts/DMSans_400Regular.ttf"); }
+@font-face { font-family: DMSans_500Medium; src: url("fonts/DMSans_500Medium.ttf"); }
+@font-face { font-family: DMSans_700Bold; src: url("fonts/DMSans_700Bold.ttf"); }
+@font-face { font-family: HankenGrotesk_400; src: url("fonts/HankenGrotesk_400.ttf"); }
+@font-face { font-family: HankenGrotesk_500; src: url("fonts/HankenGrotesk_500.ttf"); }
+@font-face { font-family: HankenGrotesk_600; src: url("fonts/HankenGrotesk_600.ttf"); }
+@font-face { font-family: HankenGrotesk_700; src: url("fonts/HankenGrotesk_700.ttf"); }
+@font-face { font-family: PlayfairDisplay_700Bold; src: url("fonts/PlayfairDisplay_700Bold.ttf"); }
+@font-face { font-family: ionicons; src: url("fonts/Ionicons.ttf"); }
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body { overflow: hidden; background-color: #0D0F14; font-family: DMSans_400Regular; -webkit-text-size-adjust: 100%; }
+i { font-style: normal; }
+.ico { display: block; font-family: ionicons; font-weight: 400; font-style: normal; line-height: normal; }
+
+.app { position: fixed; inset: 0; display: flex; flex-direction: column; }
+.screen { position: relative; flex: 1 1 0; min-height: 0; overflow: hidden; }
+
+/* Header: logo, wordmark and the globe (visa) button; three statistic pills; search. */
+.hero { padding: calc(env(safe-area-inset-top, 0px) + 16px) 0 0; border-radius: 0 0 0 0; background-color: rgba(22, 25, 33, 0); }
+.brand-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; height: 43px; margin: 0 20px 12px; }
+.brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.logo { position: relative; flex: none; width: 36px; height: 36px; }
+.logo .tile { position: absolute; inset: 0; border-radius: 8px; background: url("images/logo.png") center / contain no-repeat; }
+/* The vector mark sits exactly over the crossed paths drawn in the tile. */
+.logo .mark-box { position: absolute; left: 4.41px; top: 4.82px; width: 27.37px; height: 27.09px; }
+.logo .mark { display: block; width: 100%; height: 100%; color: #E87461; opacity: 0; }
+/* Cross and Paths are siblings, so each tweens its own colour. */
+.wordmark { font-family: PlayfairDisplay_700Bold; font-size: 32px; line-height: 43px; letter-spacing: 0px; white-space: nowrap; }
+.wordmark .cross { color: #F2F2F2; }
+.wordmark .paths { color: #E87461; }
+.head-btn { display: grid; flex: none; place-items: center; width: 40px; height: 40px; border-radius: 20px; background-color: #232733; }
+.head-btn .ico { grid-area: 1 / 1; }
+.head-btn .globe { font-size: 20px; color: #3AAFA9; }
+.head-btn .qr { font-size: 20px; color: #3AAFA9; opacity: 0; scale: 0.5; }
+
+.pills { display: flex; gap: 10px; height: 36px; margin-bottom: 12px; padding: 0 16px; }
+.pill { display: flex; flex: none; align-items: center; gap: 6px; height: 36px; padding: 6px 14px; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 20px; background-color: #161921; white-space: nowrap; }
+.pill .num { font-family: DMSans_700Bold; font-size: 14px; line-height: 18px; }
+.pill .lbl { font-family: DMSans_400Regular; font-size: 12px; line-height: 16px; color: #A0A5B1; }
+.pill .coral { color: #E87461; }
+.pill .teal { color: #4ECDC4; }
+.pill .sea { color: #3AAFA9; }
+.pill .chev { font-size: 12px; color: #6B7280; }
+/* The count that replaces the pills. */
+.pill { color: #A0A5B1; }
+.pill .from { display: flex; align-items: center; gap: 6px; }
+.pill .to { font-family: HankenGrotesk_400; font-size: 14px; line-height: 23px; }
+
+.search { display: flex; align-items: center; gap: 8px; height: 44px; margin: 0 16px 12px; padding: 0 12px; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; background-color: #161921; }
+.search-ico { display: grid; flex: none; }
+.search-ico .ico { grid-area: 1 / 1; font-size: 16px; color: #6B7280; }
+.search-ico .b { opacity: 0; }
+.placeholder { font-family: DMSans_400Regular; font-size: 14px; line-height: 18px; color: #6B7280; white-space: nowrap; }
+/* Outgoing words keep the original type and incoming words have the redesigned type, so the step
+   that swaps them can give the container its final type without either set of words changing.
+   Containers of swapped words are flex boxes, so their own line height never sizes them: it changes
+   at once, and a line box would jump. */
+.placeholder, .tab-item .t, .ini, .loc-label, .tab-label, .loc-value, .date .y { display: flex; }
+.placeholder .from { font-family: DMSans_400Regular; font-size: 14px; line-height: 18px; }
+.placeholder .to { font-family: HankenGrotesk_400; font-size: 15px; line-height: 20px; }
+
+/* Grouping tabs, then the list. */
+.list { padding: 0 16px; }
+.tabs { display: flex; gap: 4px; margin-bottom: 12px; padding: 0; border-radius: 15px; background-color: rgba(22, 25, 33, 0); }
+.tab-item { display: flex; flex: 0 0 auto; align-items: center; justify-content: center; min-width: 0; min-height: 0; padding: 8px 14px; border-radius: 20px; background-color: rgba(232, 116, 97, 0); white-space: nowrap; }
+.tab-item.active { background-color: rgba(232, 116, 97, 0.15); }
+.tab-item .t { font-family: DMSans_500Medium; font-size: 13px; line-height: 17px; color: #A0A5B1; }
+.tab-item.active .t { color: #E87461; }
+.tab-item .from { font-family: DMSans_500Medium; font-size: 13px; line-height: 17px; }
+.tab-item .to { font-family: HankenGrotesk_500; font-size: 14px; line-height: 23px; }
+.tab-item.active .to { font-family: HankenGrotesk_700; }
+
+/* A person. Positions are relative to the card's padding box. */
+.card { position: relative; height: calc(178px + var(--nb, 38px)); margin-bottom: 12px; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; background-color: #161921; box-shadow: 0 3px 10px rgba(40, 39, 30, 0); }
+.card > * { position: absolute; white-space: nowrap; }
+.art-clip { left: 0; top: 0; width: 100%; height: 141px; overflow: hidden; opacity: 0; }
+.art { position: absolute; right: -16px; bottom: -20px; width: 215px; height: 155px; opacity: 0.21; }
+.avatar { left: 16px; top: 16px; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 22px; background-color: var(--tint); }
+.ini { font-family: DMSans_700Bold; font-size: 18px; line-height: 24px; color: var(--ink); }
+.ini .from { font-family: DMSans_700Bold; font-size: 18px; line-height: 24px; }
+.ini .to { font-family: HankenGrotesk_700; font-size: 14.96px; line-height: 23px; }
+.name { left: 72px; top: 18px; font-family: PlayfairDisplay_700Bold; font-size: 17px; line-height: 22px; color: #F2F2F2; }
+.handle { left: 72px; top: 41px; font-family: DMSans_400Regular; font-size: 13px; line-height: 17px; color: #A0A5B1; }
+/* --date-w and --year-x are measured per card (app.js): "Jun 2026" on one line. */
+.date { right: 16px; top: 29.5px; width: var(--date-w); height: 17px; border-radius: 11px; background-color: rgba(248, 241, 217, 0); }
+.date > span { position: absolute; top: 0; font-family: DMSans_400Regular; font-size: 13px; line-height: 17px; color: #A0A5B1; }
+.date .m { left: 0; }
+/* The year moves on two boxes, down on .y and across on .yx, so the stamp can drop it below the
+   month before moving it left, and the two never cross. */
+.date .y { left: var(--stamp-year-x); --yw: var(--wave, 0ms); }
+.date .yx { position: relative; left: calc(var(--year-x) - var(--stamp-year-x)); }
+
+.loc-ico { display: grid; }
+.loc-ico .ico { grid-area: 1 / 1; font-size: 13px; color: #A0A5B1; }
+.loc-ico .b { opacity: 0; }
+.loc-ico[data-loc="met"] .ico { color: #E87461; }
+.loc-label { font-family: DMSans_500Medium; font-size: 12px; line-height: 16px; color: #A0A5B1; }
+.loc-label .from { font-family: DMSans_500Medium; font-size: 12px; line-height: 16px; }
+.loc-label .to { font-family: HankenGrotesk_400; font-size: 11px; line-height: 17px; }
+.loc-value { font-family: DMSans_400Regular; font-size: 13px; line-height: 17px; color: #F2F2F2; }
+.loc-ico[data-loc="met"] { left: 20px; top: 72px; }
+.loc-label[data-loc="met"] { left: 41px; top: 73px; }
+/* Likewise the meeting place: down on .loc-value, across on .lv, so it passes under "Met in". */
+.loc-value .lv { position: relative; left: 0; }
+.loc-value[data-loc="met"] { left: 17px; top: 75px; --vw: var(--wave, 0ms); }
+.loc-value[data-loc="met"] .lv { left: 72px; }
+.loc-ico[data-loc="home"] { left: 20px; top: 98px; }
+.loc-label[data-loc="home"] { left: 41px; top: 99px; }
+.loc-value[data-loc="home"] { left: 89px; top: 101px; }
+.loc-ico[data-loc="now"] { left: 20px; top: 124px; }
+.loc-label[data-loc="now"] { left: 41px; top: 125px; }
+.loc-value[data-loc="now"] { left: 89px; top: 127px; }
+
+.note { left: 16px; top: 160px; width: 324px; font-family: DMSans_400Regular; font-style: italic; font-size: 13px; line-height: 19px; color: #6B7280; white-space: normal; }
+.probe { position: absolute; left: 0; top: 0; visibility: hidden; }
+.rule { left: 0; top: 200px; width: 100%; height: 1px; background-color: rgba(255, 255, 255, 0.08); opacity: 0; }
+
+/* Tab bar. */
+/* Positioned, so the + paints over the list as the app's tab bar does. */
+.tabbar { position: relative; display: flex; flex: none; align-items: flex-start; padding: 6px 0 max(env(safe-area-inset-bottom, 0px), 12px); border-top: 1px solid rgba(255, 255, 255, 0.08); border-radius: 0 0 0 0; background-color: rgba(13, 15, 20, 0.95); }
+.tab { display: flex; flex: 1 1 0; flex-direction: column; align-items: center; gap: 3px; min-width: 0; padding-top: 6px; }
+.tab-ico { display: grid; padding: 0; border-radius: 11px; background-color: rgba(228, 235, 237, 0); }
+.tab-ico .ico { grid-area: 1 / 1; font-size: 22px; color: #A0A5B1; }
+.tab-ico .b { opacity: 0; scale: 0.6; }
+.tab.active .tab-ico .ico { color: #E87461; }
+.tab-label { font-family: DMSans_500Medium; font-size: 10px; line-height: 13px; color: #A0A5B1; white-space: nowrap; }
+.tab.active .tab-label { color: #E87461; }
+.tab-label .from { font-family: DMSans_500Medium; font-size: 10px; line-height: 13px; }
+.tab-label .to { font-family: HankenGrotesk_400; font-size: 11px; line-height: 16px; }
+.fab-slot { padding-top: 0; }
+.fab { display: grid; place-items: center; width: 54px; height: 54px; margin-top: -18px; border: 0 solid #FFFEFA; border-radius: 27px; background-color: #E87461; box-shadow: 0 4px 10px rgba(232, 116, 97, 0.4); }
+.fab .ico { font-size: 28px; color: #0D0F14; }

@@ -1,0 +1,37 @@
+/* Beat 4 · The card is reorganised around the meeting. Home and Now in step aside; where you met
+   gets its own label and a larger line; the saved memory moves up to be read next; the two other
+   places return as a footer, Homebase and Last known. All three places keep their meaning.
+   The order inside one card is set with --wave; each card follows the one above it. */
+
+.card { height: calc(225px + var(--na, 42px)); }
+.card:nth-child(2) { --lag: 90ms; }
+.card:nth-child(3) { --lag: 180ms; }
+
+/* Home and Now in fade before anything crosses them, travel unseen, and come back below the memory. */
+@keyframes step-aside { 0% { opacity: 1; } 15% { opacity: 0; } 66% { opacity: 0; } 100% { opacity: 1; } }
+.card > [data-loc="home"], .card > [data-loc="now"] { animation: step-aside 1500ms linear var(--lag, 0ms) both; }
+.card > [data-loc="home"], .card > [data-loc="home"] *, .card > [data-loc="now"], .card > [data-loc="now"] * { --wave: calc(220ms + var(--lag, 0ms)) !important; }
+.card > [data-loc] .to .ch { --wave: calc(860ms + var(--lag, 0ms)) !important; }
+
+.card > [data-loc="met"], .card > [data-loc="met"] * { --wave: calc(170ms + var(--lag, 0ms)) !important; }
+.note { left: 17px; top: 141px; --wave: calc(280ms + var(--lag, 0ms)) !important; }
+.rule { opacity: 1; --wave: calc(820ms + var(--lag, 0ms)) !important; }
+
+.loc-ico .a { opacity: 0; }
+.loc-ico .b { opacity: 1; }
+.loc-ico .ico, .loc-ico[data-loc="met"] .ico { font-size: 11px; color: #A0A5B1; }
+.loc-ico[data-loc="met"] .ico { font-size: 12px; }
+
+.loc-ico[data-loc="met"] { left: 17px; top: 86px; }
+.loc-label[data-loc="met"] { left: 32.13px; top: 84px; line-height: 18px; }
+.loc-value[data-loc="met"] { top: 106px; font-size: 16px; line-height: 23px; }
+.loc-value[data-loc="met"] .lv { left: 0; --wave: calc(var(--vw) + 240ms) !important; }
+
+.loc-label[data-loc="home"], .loc-label[data-loc="now"] { top: 213px; font-family: HankenGrotesk_400; font-size: 11px; line-height: 17px; }
+.loc-value[data-loc="home"], .loc-value[data-loc="now"] { top: 234px; line-height: 19px; }
+.loc-ico[data-loc="home"] { left: 17px; top: 215px; }
+.loc-label[data-loc="home"] { left: 30.88px; }
+.loc-value[data-loc="home"] { left: 17px; }
+.loc-ico[data-loc="now"] { left: 181px; top: 215px; }
+.loc-label[data-loc="now"] { left: 194.88px; }
+.loc-value[data-loc="now"] { left: 181px; }

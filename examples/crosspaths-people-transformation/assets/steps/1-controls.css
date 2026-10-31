@@ -1,0 +1,16 @@
+/* Beat 1 · One count, one choice. The statistic and visa pills give way to a single count of people
+   and the countries you met them in, and the three grouping tabs become a People / Places switch.
+   Still in the original colours; the palette changes in step 5. */
+
+.pills { height: 23px; }
+.pill { height: 23px; padding: 0; border-width: 0; border-color: rgba(255, 255, 255, 0); background-color: rgba(22, 25, 33, 0); }
+.tabs { gap: 0; padding: 4px; background-color: #161921; }
+.tab-item { flex: 1 1 0px; min-height: 46px; padding: 8px; border-radius: 11px; }
+.tab-item.active { background-color: #232733; }
+.tab-item.active .t { color: #F2F2F2; }
+/* The tabs follow the count, rather than everything changing at once. */
+html.s1:not(.s2) .tabs, html.s1:not(.s2) .tabs * { --wave: 380ms !important; }
+/* The new words' type, on their containers (see app.css: outgoing words keep theirs). */
+.pill { font-family: HankenGrotesk_400; font-size: 14px; line-height: 23px; }
+.tab-item .t { font-family: HankenGrotesk_500; font-size: 14px; line-height: 23px; }
+.tab-item.active .t { font-family: HankenGrotesk_700; }

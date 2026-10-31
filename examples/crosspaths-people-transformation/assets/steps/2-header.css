@@ -1,0 +1,24 @@
+/* Beat 2 · The header becomes its own panel. The black logo tile goes and the crossed paths stay,
+   drawn as the transparent mark; the wordmark tightens; the globe (visa) button becomes the
+   travel QR code; search grows and asks for what people remember. */
+
+.hero { padding: calc(env(safe-area-inset-top, 0px) + 16px) 20px 20px; border-radius: 0 0 28px 28px; background-color: #161921; }
+.brand-row { height: 48px; margin: 0 0 16px; }
+.brand { gap: 8px; }
+.logo { width: 38px; height: 38px; }
+.logo .tile { opacity: 0; }
+.logo .mark { opacity: 1; }
+/* The mark first replaces the tile in place, then grows. */
+.logo .mark-box { left: 0; top: 0; width: 38px; height: 38px; --wave: 380ms !important; }
+.wordmark { font-size: 29px; line-height: 38px; letter-spacing: -1px; }
+.head-btn { width: 48px; height: 48px; border-radius: 24px; }
+.head-btn .globe { opacity: 0; scale: 0.5; }
+.head-btn .qr { font-size: 23px; opacity: 1; scale: none; }
+.pills { margin-bottom: 16px; padding: 0; }
+.search { height: 51px; margin: 0; padding: 0 14px; gap: 10px; border-radius: 14px; background-color: #232733; }
+.search-ico .ico { font-size: 18px; }
+.search-ico .a { opacity: 0; }
+.search-ico .b { opacity: 1; }
+.list { padding: 20px 20px 0; }
+.tabs { margin-bottom: 18px; }
+.placeholder { font-family: HankenGrotesk_400; font-size: 15px; line-height: 20px; }

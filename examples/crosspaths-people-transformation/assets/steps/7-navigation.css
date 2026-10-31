@@ -1,0 +1,15 @@
+/* Beat 7 · The tab bar settles: a rounded sheet, the selected tab marked by a soft pill in action
+   blue #284D6B, outline icons, a gold + in the centre, and Timeline and Profile renamed Journey and
+   You. People · Map · + · Journey · You. */
+
+.tabbar { padding: 8px 8px max(env(safe-area-inset-bottom, 0px), 12px); border-radius: 24px 24px 0 0; }
+.tab { min-height: 48px; padding-top: 0; }
+.tab-ico { padding: 3px 12px; }
+.tab-ico .a:not(:only-child) { opacity: 0; scale: 0.6; }
+.tab-ico .b { opacity: 1; scale: none; }
+.tab.active .tab-ico { background-color: #E4EBED; }
+.tab.active .tab-ico .ico, .tab.active .tab-label { color: #284D6B; }
+.tab-label { font-size: 11px; line-height: 16px; }
+.tab-label[data-copy] { font-family: HankenGrotesk_400; }
+.fab { width: 56px; height: 56px; border-width: 3px; border-radius: 28px; background-color: #F4CE52; box-shadow: 0 4px 8px rgba(25, 30, 35, 0.14); }
+.fab .ico { font-size: 29px; color: #563525; }
