@@ -29,6 +29,14 @@ Open [app.html](app.html) in a browser at a phone size to try both versions; qua
 
 The story ([story.json](story.json)) uses the renderer's mobile features: a 393 × 852 viewport with the iPhone's safe areas, the device's status bar and Dynamic Island drawn inside the top inset (`deviceChrome`), camera zooms onto the part each step changes, live touch-target, text-size and contrast measurements, faster motion than the default, and a side-caption layout for the square and landscape cuts. [story/prepare.js](story/prepare.js) marks which words roll over at which step; both versions of every string come from the page's own copy table.
 
+## Which cut to post
+
+Platform behaviour as of October 2026; check again before relying on it.
+
+- **Portrait (1080 × 1920)** shows the phone at 1.74× its logical size, so 14 px interface text plays at about 8.8 pt on a phone, and it fills a phone held upright. It is the cut that represents the mobile experience best. X stopped cropping vertical video in the timeline in February 2026 and opens it full screen with a tap; LinkedIn shows 9:16 at full height on phones and with side bars on desktop.
+- **Square (1080 × 1080)** suits a LinkedIn audience that reads on desktop: it displays whole everywhere, and the side layout keeps the captions large, but the phone is at 1.04× (about 5.3 pt text) between the zoomed steps.
+- **Landscape (1920 × 1080)** is for slides, a website or a talk, not a phone feed.
+
 ## Files
 
 | File | What it is |

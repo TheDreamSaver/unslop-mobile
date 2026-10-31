@@ -215,6 +215,7 @@ export async function renderComparison(cmp, { out, framesDir } = {}) {
     const page = await context.newPage();
     await page.setContent(html, { waitUntil: "load" });
     await page.evaluate(() => Promise.all([...document.images].map((img) => img.decode())));
+    await page.evaluate((texts) => window.__fitCaptions(texts), [cmp.intro, ...cmp.pairs.map((pair, index) => `${index + 1} · ${pair.caption}`), cmp.outro].filter(Boolean));
     const run = (code, arg) => () => page.evaluate(([code, arg]) => window[code](arg), [code, arg]);
     const caption = (text) => () => page.evaluate((text) => window.__caption(text), text);
     const counter = (done) => () => page.evaluate(([count, done]) => window.__counter(count, done), [cmp.pairs.length, done]);

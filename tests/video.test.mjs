@@ -93,6 +93,30 @@ test("an upstream-style story.html still renders, at its own desktop width", { s
   assert.deepEqual(jpegSize(join(dir, "frames", "f-00000.jpg")), { width: 1080, height: 1080 });
 });
 
+test("long captions never run into the step counter, in any layout", { skip: await browserSkip() }, async () => {
+  const { launchBrowser } = await import("../scripts/lib/deps.mjs");
+  const { stageHtml, sideLayout } = await import("../scripts/lib/stage.mjs");
+  const texts = ["Short", "1 · Clear the Dynamic Island and home indicator", "Unslop Mobile · mobile review for coding agents, on every phone you test"];
+  const { browser } = await launchBrowser();
+  try {
+    for (const canvas of [{ width: 1080, height: 1080 }, { width: 1920, height: 1080 }, { width: 1080, height: 1920 }]) {
+      const side = canvas.width / canvas.height >= 0.9;
+      const layout = side ? sideLayout({ canvas, region: { width: 393, height: 852 } }) : { screens: [{ x: 40, y: 300, width: 700, height: 1500 }], panel: null };
+      const page = await browser.newPage({ viewport: canvas });
+      await page.setContent(stageHtml({ canvas, title: "Title", caption: texts[0], screens: layout.screens, panel: layout.panel, screenHtml: () => "" }));
+      await page.evaluate((texts) => { window.__fitCaptions(texts); window.__counter(5, 2); }, texts);
+      for (const text of texts) {
+        await page.evaluate((text) => { const box = document.getElementById("caption"); box.replaceChildren(Object.assign(document.createElement("span"), { textContent: text })); }, text);
+        const [caption, counter] = await page.evaluate(() => [document.querySelector("#caption > span").getBoundingClientRect().bottom, document.getElementById("counter").getBoundingClientRect().top]);
+        assert.ok(caption <= counter + 0.5, `${canvas.width}x${canvas.height}: "${text}" ends at ${caption}, counter starts at ${counter}`);
+      }
+      await page.close();
+    }
+  } finally {
+    await browser.close();
+  }
+});
+
 function comparisonFiles(beforeSize, afterSize, beforeFixture = "fixture@1", afterFixture = "fixture@1") {
   const dir = tempDir();
   writePng(join(dir, "before.png"), beforeSize[0], beforeSize[1], [230, 230, 230]);

@@ -93,6 +93,22 @@ export function stageHtml({ canvas, theme = DEFAULT_THEME, title = "", caption =
       next.offsetHeight;
       next.classList.remove("entering");
     };
+    // The caption box is as tall as the longest caption the video will show, so a caption that
+    // wraps to more lines never runs into the step counter beneath it.
+    window.__fitCaptions = (texts) => {
+      const box = document.getElementById("caption");
+      const probe = document.createElement("span");
+      probe.style.visibility = "hidden";
+      box.appendChild(probe);
+      let tallest = 0;
+      for (const text of texts) {
+        probe.textContent = text;
+        tallest = Math.max(tallest, probe.getBoundingClientRect().height);
+      }
+      probe.remove();
+      box.style.minHeight = Math.ceil(tallest) + "px";
+      return Math.ceil(tallest);
+    };
     window.__counter = (count, done) => {
       const box = document.getElementById("counter");
       if (box.children.length !== count) box.innerHTML = "<i></i>".repeat(count);

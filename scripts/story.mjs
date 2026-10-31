@@ -742,6 +742,7 @@ export async function renderStory(story, { out, framesDir, play = false } = {}) 
     await frame.evaluate(() => window.__story.install());
     await page.waitForTimeout(300);
 
+    await page.evaluate((texts) => window.__fitCaptions(texts), [story.intro, ...story.steps.map((step, index) => `${index + 1} · ${step.caption}`), story.outro]);
     const slop = await frame.evaluate(() => document.querySelectorAll("[data-slop]").length);
     const call = (name, ...values) => () => frame.evaluate(([name, values]) => window.__story[name](...values), [name, values]);
     const caption = (text) => () => page.evaluate((text) => window.__caption(text), text);

@@ -79,7 +79,7 @@ $unslop-mobile check the add-contact form with the keyboard open and larger text
 ```bash
 cd unslop-mobile
 npm install                 # installs Playwright 1.64.1; uses Google Chrome if present
-npm test                    # 55 tests; browser and video tests skip with a reason if the tools are missing
+npm test                    # 56 tests; browser and video tests skip with a reason if the tools are missing
 npm run example             # captures, then renders both videos into examples/crosspaths/media/
 npm run demo:video          # the checkout demo in portrait, square and landscape
 ```
@@ -111,7 +111,7 @@ A missing piece stops the script with exit code 2 and a message saying what to i
 
 Exercised for this release, on macOS (Darwin 25.5) with Node 24.6, Google Chrome 156, Playwright 1.64.1 and ffmpeg 9.0.2:
 
-- `npm test`: 55 tests covering geometry (aspect ratio, independent viewport and canvas, side layout), dependency errors, captures at the requested viewport and scale, matched before/after sizes and fixtures, measurement of small, covered and inset-bound controls, video dimensions, codec, pixel format and length, every fix in both examples, pixel-identical rendering of the unchanged CrossPaths screens, both stories ending on their after pages, the live redlines reporting real sizes and contrast, colours never jumping back while frames are seeked, documentation links, attribution and a scan for private material.
+- `npm test`: 56 tests covering geometry (aspect ratio, independent viewport and canvas, side layout), dependency errors, captures at the requested viewport and scale, matched before/after sizes and fixtures, measurement of small, covered and inset-bound controls, video dimensions, codec, pixel format and length, every fix in both examples, pixel-identical rendering of the unchanged CrossPaths screens, both stories ending on their after pages, the live redlines reporting real sizes and contrast, colours never jumping back while frames are seeked, documentation links, attribution and a scan for private material.
 - The CrossPaths captures at five phone viewports and two text sizes, and all five videos, inspected frame by frame.
 - Claude Code 2.1.259 discovered the skill from a project-scoped `.claude/skills/unslop-mobile/` folder and matched it by its description.
 - Codex: the skill passes the validator bundled with Codex 0.164 (`skill-creator/scripts/quick_validate.py`), and the install path follows Codex's bundled skill-installer documentation. A live Codex session with the skill installed was not run.
